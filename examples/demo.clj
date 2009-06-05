@@ -1,3 +1,14 @@
+;; 
+;; Simple demo of redis-clojure functionality
+;;
+;; Make sure redis-clojure.jar or the contents of the src/ directory
+;; is on the classpath.
+;;
+;; Either:
+;;   (add-classpath "file:///path/to/redis-clojure.jar"
+;; or:
+;;   (add-classpath "file:///path/to/redis/src-dir/")
+;;
 (ns demo
   (:require redis))
 

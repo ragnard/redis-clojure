@@ -1,5 +1,10 @@
+(add-classpath "file:///Users/ragge/Projects/clojure/redis-clojure/redis-clojure.jar")
+
+(println (System/getProperty "java.class.path"))
+
 (ns demo
   (:require redis))
+
 
 
 (redis/with-server

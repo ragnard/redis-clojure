@@ -35,16 +35,16 @@
  
   <target name="jar" description="Create jar file" depends="compile">
     <jar jarfile="redis-clojure.jar">
+      <path location="LICENSE"/>
       <fileset dir="${source.dir}" includes="**/*.clj"/>
-      <fileset dir="${build.dir}" includes="**/*.class"/>
+      <!--<fileset dir="${build.dir}" includes="**/*.class"/>-->
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
       </manifest>
     </jar>
   </target>
 
- 
-  <target name="test" description="Run unit tests">
+  <target name="test" description="Run tests">
     <java classname="clojure.main">
       <classpath>
         <path location="${source.dir}"/>
@@ -55,17 +55,5 @@
       <arg value="(require 'redis.tests 'redis.tests.internal) (clojure.contrib.test-is/run-tests 'redis.tests 'redis.tests.internal)" />
     </java>
   </target>
-
-<!--   <target name="dist" depends="jar" description="Create binary distribution">   -->
-<!--     <delete dir="${dist.dir}" />   -->
-<!--     <mkdir dir="${dist.dir}/lib" />   -->
-<!--     <copy todir="${dist.dir}" file="${elevator-controller.jar}" />   -->
-<!--     <copy todir="${dist.dir}/lib" filtering="off">   -->
-<!--       <flattenmapper />   -->
-<!--       <fileset dir="${lib.dir}" includes="**/*.jar" />   -->
-<!--     </copy>   -->
-<!--   </target>   -->
-
-
 
 </project>
