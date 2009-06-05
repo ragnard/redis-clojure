@@ -318,12 +318,16 @@
   (is (= #{"one" "two" "three"} (redis/smembers "set"))))
 
 
-
+;;
+;; Multiple database handling commands
+;;
 (deftest select
-  (testing "should select another db"
-           (is (= "OK" (redis/select 0)))
-           (is (= nil (redis/get "akeythat_probably_doesnotexsistindb0")))))
+  (redis/select 0)
+  (is (= nil (redis/get "akeythat_probably_doesnotexsistindb0"))))
 
+(deftest flushdb
+  (redis/flushdb)
+  (is (= 0 (redis/dbsize))))
 
 
 

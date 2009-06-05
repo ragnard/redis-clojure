@@ -61,6 +61,7 @@
 
 
 (defn read-crlf
+  "Read a CR+LF combination from Reader"
   [#^Reader reader]
   (let [cr (.read reader)
         lf (.read reader)]
@@ -71,6 +72,12 @@
     nil))
 
 (defn read-line-crlf
+  "Read from reader until exactly a CR+LF combination is
+  found. Returns the line read without trailing CR+LF.
+
+  This is used instead of Reader.readLine() method since it tries to
+  read either a CR, a LF or a CR+LF, which we don't want in this
+  case."
   [#^Reader reader]
   (loop [line []
          c (.read reader)]
@@ -85,16 +92,20 @@
              (.read reader)))))
 
 (defn read-error-reply
+  "Read error string and throw an Exception with error string as
+  message"
   [#^BufferedReader reader]
   (let [error (read-line-crlf reader)]
     (throw (Exception. (str "Server error: " error)))))
 
 (defn read-integer-reply
+  "Read a string representation of an integer and return as an integer"
   [#^BufferedReader reader]
   (let [number (trim (read-line-crlf reader))]
     (parse-int number)))
 
 (defn read-bulk-reply
+  "Read a bulk reply and return as a string"
   [#^BufferedReader reader]
   (let [line (read-line-crlf reader)
         length (parse-int line)]
@@ -111,6 +122,7 @@
 (def read-reply) ;; forward declaration
 
 (defn read-multi-bulk-reply
+  "Read a multi bulk reply and return as an vector of bulk replies."
   [#^BufferedReader reader]
   (let [line (read-line-crlf reader)
         count (parse-int line)]
@@ -123,11 +135,13 @@
           (recur (dec i) (conj replies (read-reply reader))))))))
 
 (defn read-reply
-  ([] 
+  ([]
+     "Read a reply from socket"
      (let [input-stream (.getInputStream (#^Socket socket*))
            reader (BufferedReader. (InputStreamReader. input-stream))]
        (read-reply reader)))
   ([#^BufferedReader reader]
+     "Read a reply from a BufferedReader"
      (let [type (char (.read reader))]
        (condp = type
          \- (read-error-reply reader)
@@ -138,23 +152,20 @@
          (throw (Exception. (str "Protocol error: Unknown reply type: " type)))))))
 
 
-
-
 (defn str-join
+  "Join elements in sequence with separator"
   [separator sequence]
   (apply str (interpose separator sequence)))
 
 
-(defn command-str
-  [coll]
-  (str (str-join " " coll) "\r\n"))
-
 (defn inline-command
+  "Create a string for an inline command"
   [name & args]
   (let [cmd (str-join " " (conj args name))]
     (str cmd "\r\n")))
 
 (defn bulk-command
+  "Create a string for an bulk command"
   [name & args]
   (let [data (str (last args))
         data-length (count (str data))
@@ -168,11 +179,18 @@
 
 
 (defn parse-params
+  "Return a restructuring of params, which is of form:
+     [arg* (& more)?]
+  into
+     [(arg1 arg2 ..) more]"
   [params]
   (let [[args rest] (split-with #(not= % '&) params)]
     [args (last rest)]))
 
 (defmacro defcommand
+  "Define a function for Redis command name with parameters
+  params. Type is one of :inline or :bulk, which determines how the
+  command string is constructued."
   ([name params type] `(defcommand ~name ~params ~type (fn [reply#] reply#)))
   ([name params type reply-fn] `(~name ~params ~type ~reply-fn)
      (do

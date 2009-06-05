@@ -1,12 +1,16 @@
-(add-classpath "file:///Users/ragge/Projects/clojure/redis-clojure/src/")
+;(add-classpath "file:///Users/ragge/Projects/clojure/redis-clojure/src/")
 
 (ns redis
   (:use redis.internal))
 
-
 (defmacro with-server
   "Evaluates body in the context of a new connection to a Redis server
-  then closes the connection."
+  then closes the connection.
+
+  server-spec is a map with any of the following keys:
+    :host     hostname (default \"127.0.0.1\")
+    :port     port (default 6379)
+    :db       database to user (default 0)"
   [server-spec & body]
   `(with-server* ~server-spec (fn []
                                 (do
@@ -103,7 +107,7 @@
   (flushdb     [] :inline)
   (flushall    [] :inline)
   ;; Sorting
-  
+  ; (sort) - TBD.
   ;;
   (info        [] :inline string-to-map)
   ;;(monitor     [] :inline))
