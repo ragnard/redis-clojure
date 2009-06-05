@@ -1,18 +1,48 @@
 # redis-clojure
 
-A Clojure client library for the [Redis](http://code.google.com/p/redis) key value storage system.
+A Clojure client library for the
+[Redis](http://code.google.com/p/redis) key value storage system.
 
 ## Dependencies
 
-Clojure
-clojure-contrib - for test_is
+To use redis-clojure, you'll need:
 
-## Setup
+* The [Clojure](http://clojure.org) programming language
+* The [Clojure-Contrib](http://code.google.com/p/clojure-contrib) library (for running the tests)
 
-Use the tasks mentioned above (in Dependencies) to get your machine setup.
+## Building 
+
+To build redis-clojure:
+
+    ant -Dclojure.jar=/path/to/clojure.jar
+
+This will build `redis-clojure.jar`.
+
+## Running tests
+
+To run tests:
+
+    ant -Dclojure.jar=/path/to/clojure.jar -Dclojure-contrib.jar=/path/to/clojure-contrib.jar
+
+*Note* you need to have `redis-server` running first.
+
+## Using
+
+To use redis-clojure in your application, simply make sure either
+`redis-clojure.jar` or the contents of the `src/` directory is on your
+classpath.
+
+This can be accomplished like so:
+
+    (add-classpath "file:///path/to/redis-clojure.jar")
 
 ## Examples
 
-Check 'src/demo.clj'
+Check the 'examples/' directory.
 
-*Note* you need to have redis-server running first.
+*Note* you need to have `redis-server` running first.
+
+## Todo
+
+* Implement `SORT` command
+* Maybe implement pipelining
