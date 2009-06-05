@@ -5,9 +5,15 @@
 (redis/with-server
   {:host "127.0.0.1" :port 6379 :db 0}
   (do
-    (println (redis/ping))
-    ;(println (redis/info))
+    (println "Sending ping")
+    (println "Reply:" (redis/ping))
+    (println "Server info:")
     (let [info (redis/info)]
-      (println info)
-      (apply map (fn [entry] (println entry)) info))))
+      (dorun
+       (map (fn [entry]
+              (println (str "- "(first entry) ": " (last entry)))) info)))
+    (println "Setting key 'foo' to 'bar'")
+    (println "Reply:" (redis/set "foo" "bar"))
+    (println "Getting value of key 'foo'")
+    (println "Reply:" (redis/get "foo"))))
 

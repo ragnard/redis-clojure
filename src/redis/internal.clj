@@ -21,7 +21,7 @@
 (def *default-host* "127.0.0.1")
 (def *default-port* 6379)
 (def *default-db* 0)
-(def *default-timeout* 5) ;; not currently used
+(def *default-timeout* 5) 
 
 
 (defstruct server :host :port :db :timeout :socket)
@@ -30,7 +30,7 @@
                 :host     *default-host*
                 :port     *default-port*
                 :db       *default-db*
-                :timeout  *default-timeout*
+                :timeout  *default-timeout* ;; not yet used
                 :socket   nil))
 
 (defn connect-to-server
