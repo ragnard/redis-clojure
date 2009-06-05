@@ -6,21 +6,22 @@
                     BufferedReader]
            [java.net Socket]))
 
-(defn uppercase [#^String s] (.toUpperCase s))
-(defn trim [#^String s] (.trim s))
-(defn parse-int [#^String s] (Integer/parseInt s))
-(defn char-array [len] (make-array Character/TYPE len))
-
-
 (set! *warn-on-reflection* true)
 
-(def *CR* 0x0d)
-(def *LF* 0x0a)
+(def *cr* 0x0d)
+(def *lf* 0x0a)
+(defn- cr? [c] (= c *cr*))
+(defn- lf? [c] (= c *lf*))
+
+(defn- uppercase [#^String s] (.toUpperCase s))
+(defn- trim [#^String s] (.trim s))
+(defn- parse-int [#^String s] (Integer/parseInt s))
+(defn- char-array [len] (make-array Character/TYPE len))
 
 (def *default-host* "127.0.0.1")
 (def *default-port* 6379)
 (def *default-db* 0)
-(def *default-timeout* 5)
+(def *default-timeout* 5) ;; not currently used
 
 
 (defstruct server :host :port :db :timeout :socket)
@@ -32,10 +33,8 @@
                 :timeout  *default-timeout*
                 :socket   nil))
 
-
-
-
 (defn connect-to-server
+  "Create a Socket connected to server"
   [server]
   (let [{:keys [host port timeout]} server
         socket (Socket. #^String host #^Integer port)]
@@ -48,19 +47,18 @@
       (binding [*server* (assoc server :socket socket)]
         (func)))))
 
-(defn socket*
-  []
-  (:socket *server*))
+(defn socket* []
+  (or (:socket *server*)
+      (throw (Exception. "Not connected to a Redis server"))))
 
 (defn send-command
+  "Send a command string to server"
   [#^String cmd]
   (let [out (.getOutputStream (#^Socket socket*))
         bytes (.getBytes cmd)]
     (.write out bytes)))
 
 
-(defn- cr? [c] (= c 0x0d))
-(defn- lf? [c] (= c 0x0a))
 
 (defn read-crlf
   [#^Reader reader]
@@ -169,12 +167,10 @@
                   :bulk   'bulk-command})
 
 
-(defn flatten-params
+(defn parse-params
   [params]
   (let [[args rest] (split-with #(not= % '&) params)]
-    [args
-     (or (last rest)
-         nil)]))
+    [args (last rest)]))
 
 (defmacro defcommand
   ([name params type] `(defcommand ~name ~params ~type (fn [reply#] reply#)))
@@ -188,12 +184,13 @@
        (let [command (uppercase (str name))
              command-fn (type command-fns)
              [command-params
-              command-params-rest] (flatten-params params)]
+              command-params-rest] (parse-params params)]
          `(defn ~name
             ~params
             (let [request# (apply ~command-fn
                                   ~command
-                                  (concat [~@command-params] ~command-params-rest))]
+                                  ~@command-params
+                                  ~command-params-rest)]
               (send-command request#)
               (~reply-fn (read-reply)))))
        
@@ -207,18 +204,3 @@
 
 
 
-(let [args '[key & keys]
-      [arg rest] (flatten-params args)]
-  [arg rest]
-  `(apply inline-command "MGET" ~@arg ~rest)
-  )
-
-
-;; (defcommands
-;;   (one)
-;;   (two))
-
-;; ->
-
-;; (defcommand one)
-;; (defcommand two)

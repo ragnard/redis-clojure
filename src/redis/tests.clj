@@ -8,29 +8,33 @@
    {:host "127.0.0.1"
     :port 6379
     :db 15}
+   ;; String value
    (redis/set "foo" "bar")
+   ;; List with three items
+   (redis/rpush "list" "one")
+   (redis/rpush "list" "two")
+   (redis/rpush "list" "three")
+   ;; Set with three members
+   (redis/sadd "set" "one")
+   (redis/sadd "set" "two")
+   (redis/sadd "set" "three")
    (f)
    (redis/flushdb)))
                      
 (use-fixtures :each server-fixture)
 
 (deftest ping
-  (testing "should return PONG"
-           (is (= "PONG" (redis/ping)))))
+  (is (= "PONG" (redis/ping))))
 
 (deftest set*
-  (testing "should be able to set the value at a nonexistent key"
-           (redis/set "bar" "foo")
-           (is (= "foo" (redis/get "bar"))))
-  (testing "should be able to set the value at a key"
-           (redis/set "foo" "baz")
-           (is (= "baz" (redis/get "foo")))))
+  (redis/set "bar" "foo")
+  (is (= "foo" (redis/get "bar")))
+  (redis/set "foo" "baz")
+  (is (= "baz" (redis/get "foo"))))
 
 (deftest get*
-  (testing "should return nil if key does not exist"
-           (is (= nil (redis/get "bar"))))
-  (testing "should return the value at a key"
-           (is (= "bar" (redis/get "foo")))))
+  (is (= nil (redis/get "bar")))
+  (is (= "bar" (redis/get "foo"))))
 
 (deftest getset
   (is (= nil   (redis/getset "bar" "foo")))
@@ -84,133 +88,177 @@
   (is (= nil  (redis/get "foo"))))
 
 (deftest type*
-  (testing "type"
-           (testing "should return :none for nonexistent key"
-                    (is (= :none (redis/type "nonexistent"))))
-           (testing "should return :string if value at key is a string"
-                    (is (= :string (redis/type "foo"))))
-           (testing "should return :list if value at key is a list"
-                    (redis/rpush "list" "one")
-                    (is (= :list (redis/type "list"))))
-           (testing "should return :set if value at key is a set"
-                    (is (= :set (redis/type "set")))))
-)
+  (is (= :none (redis/type "nonexistent")))
+  (is (= :string (redis/type "foo")))
+  (is (= :list (redis/type "list")))
+  (is (= :set (redis/type "set"))))
 
 (deftest keys*
-  (testing "should return nil if no keys matching pattern were found"
-           (is (= nil (redis/keys "a*"))))
-  (testing "should return a list of keys matching pattern"
-           (is (= ["foo"] (redis/keys "f*")))
-           (is (= ["foo"] (redis/keys "f?o")))
-           (redis/set "fuu" "baz")
-           (is (= #{"foo" "fuu"} (set (redis/keys "f*"))))))
+  (is (= nil (redis/keys "a*")))
+  (is (= ["foo"] (redis/keys "f*")))
+  (is (= ["foo"] (redis/keys "f?o")))
+  (redis/set "fuu" "baz")
+  (is (= #{"foo" "fuu"} (set (redis/keys "f*")))))
 
 (deftest randomkey
-  (testing "should return a random key"
-           (is (= "foo" (redis/randomkey))))
-  (testing "should return the empty string if db is empty"
-           (redis/flushdb)
-           (is (= "" (redis/randomkey)))))
+  (redis/flushdb)
+  (redis/set "foo" "bar")
+  (is (= "foo" (redis/randomkey)))
+  (redis/flushdb)
+  (is (= "" (redis/randomkey))))
 
 (deftest rename
-  (testing "should throw exception when renaming the same key"
-           (is (thrown? Exception
-                        (redis/rename "foo" "foo"))))
-  (testing "should throw an exception when renaming an nonexistent key"
-           (is (thrown? Exception
-                        (redis/rename "nonexistent" "foo"))))
-  (testing "should rename a key"
-           (is (= "OK" (redis/rename "foo" "bar")))
-           (is (= "bar" (redis/get "bar")))
-           (is (= nil (redis/get "foo"))))
-  (testing "should overwrite newkey if it already exists"
-           (redis/set "foo" "bar")
-           (redis/set "bar" "baz")
-           (is (= "OK" (redis/rename "foo" "bar")))
-           (is (= "bar" (redis/get "bar")))
-           (is (= nil (redis/get "foo"))))
+  (is (thrown? Exception (redis/rename "foo" "foo")))
+  (is (thrown? Exception (redis/rename "nonexistent" "foo")))
+  (redis/rename "foo" "bar")
+  (is (= "bar" (redis/get "bar")))
+  (is (= nil (redis/get "foo")))
+  (redis/set "foo" "bar")
+  (redis/set "bar" "baz")
+  (redis/rename "foo" "bar")
+  (is (= "bar" (redis/get "bar")))
+  (is (= nil (redis/get "foo")))
   )
 
 (deftest renamenx
-  (testing "should throw exception when renaming the same key"
-           (is (thrown? Exception
-                        (redis/renamenx "foo" "foo"))))
-  (testing "should throw an exception when renaming an nonexistent key"
-           (is (thrown? Exception
-                        (redis/renamenx "nonexistent" "foo"))))
-  (testing "should rename a key if it does not already exist"
-           (is (= true (redis/renamenx "foo" "bar")))
-           (is (= "bar" (redis/get "bar")))
-           (is (= nil (redis/get "foo"))))
-  (testing "should return false if new key already exists"
-           (redis/set "foo" "bar")
-           (redis/set "bar" "baz")
-           (is (= false (redis/renamenx "foo" "bar"))))
+  (is (thrown? Exception (redis/renamenx "foo" "foo")))
+  (is (thrown? Exception (redis/renamenx "nonexistent" "foo")))
+  (is (= true (redis/renamenx "foo" "bar")))
+  (is (= "bar" (redis/get "bar")))
+  (is (= nil (redis/get "foo")))
+  (redis/set "foo" "bar")
+  (redis/set "bar" "baz")
+  (is (= false (redis/renamenx "foo" "bar")))
   )
 
 (deftest dbsize
-  (testing "should return the number of keys in the db"
-           (is (= 1 (redis/dbsize)))
-           (redis/del "foo")
-           (is (= 0 (redis/dbsize)))))
+  (let [size-before (redis/dbsize)]
+    (redis/set "anewkey" "value")
+    (let [size-after (redis/dbsize)]
+      (is (= size-after
+             (+ 1 size-before))))))
 
 (deftest expire
-  (testing "should expire a key"
-           (is (= true (redis/expire "foo" 1)))
-           (Thread/sleep 2000)
-           (is (= false (redis/exists "foo"))))
-  (testing "should return false if key already has an expiry set"
-           (redis/set "foo" "bar")
-           (is (= true (redis/expire "foo" 20)))
-           (is (= false (redis/expire "foo" 10))))
-  (testing "should return false if key does not exist"
-           (is (= false (redis/expire "nonexistent" 42))))
+  (is (= true (redis/expire "foo" 1)))
+  (Thread/sleep 2000)
+  (is (= false (redis/exists "foo")))
+  (redis/set "foo" "bar")
+  (is (= true (redis/expire "foo" 20)))
+  (is (= false (redis/expire "foo" 10)))
+  (is (= false (redis/expire "nonexistent" 42)))
   )
 
 (deftest ttl
-  (testing "should return -1 if key does not exist or has no expiry set"
-           (is (= -1 (redis/ttl "nonexistent")))
-           (is (= -1 (redis/ttl "foo"))))
-  (testing "should return the time-to-live for a key with an expiry set"
-           (redis/expire "foo" 42)
-           (is (< 40 (redis/ttl "foo")))))
+  (is (= -1 (redis/ttl "nonexistent")))
+  (is (= -1 (redis/ttl "foo")))
+  (redis/expire "foo" 42)
+  (is (< 40 (redis/ttl "foo"))))
 
 
 ;;
 ;; List commands
 ;;
 (deftest rpush
-  (testing "should throw an exception if type at key is not a list"
-           (is (thrown? Exception
-                        (redis/rpush "foo"))))
-  (testing "should create a new list if key does not exist"
-           (is (= "OK" (redis/rpush "list" "one")))
-           (is (= 1 (redis/llen "list")))
-           (is (= "one" (redis/lindex "list" 0)))
-           (redis/del "list"))
-  (testing "should append an element to the tail of a list"
-           (is (= "OK" (redis/rpush "list" "one")))
-           (is (= "OK" (redis/rpush "list" "two")))
-           (is (= ["one" "two"] (redis/lrange "list" 0 1)))))
+  (is (thrown? Exception (redis/rpush "foo")))
+  (redis/rpush "newlist" "one")
+  (is (= 1 (redis/llen "newlist")))
+  (is (= "one" (redis/lindex "newlist" 0)))
+  (redis/del "newlist")
+  (redis/rpush "list" "item")
+  (is (= "item" (redis/rpop "list"))))
 
 (deftest lpush
-  (testing "should throw an exception if type at key is not a list"
-           (is (thrown? Exception
-                        (redis/lpush "foo"))))
-  (testing "should create a new list if key does not exist"
-           (is (= "OK" (redis/lpush "list" "one")))
-           (is (= 1 (redis/llen "list")))
-           (is (= "one" (redis/lindex "list" 0)))
-           (redis/del "list"))
-  (testing "should append an element to the head of a list"
-           (is (= "OK" (redis/lpush "list" "one")))
-           (is (= "OK" (redis/lpush "list" "two")))
-           (is (= ["two" "one"] (redis/lrange "list" 0 1)))))
+  (is (thrown? Exception (redis/lpush "foo")))
+  (redis/lpush "newlist" "item")
+  (is (= 1 (redis/llen "newlist")))
+  (is (= "item" (redis/lindex "newlist" 0)))
+  (redis/lpush "list" "item")
+  (is (= "item" (redis/lpop "list"))))
+
+(deftest llen
+  (is (thrown? Exception (redis/llen "foo")))
+  (is (= 3 (redis/llen "list"))))
+
+(deftest lrange
+  (is (thrown? Exception (redis/lrange "foo" 0 1)))
+  (is (= ["one"] (redis/lrange "list" 0 0)))
+  (is (= ["three"] (redis/lrange "list" -1 -1)))
+  (is (= ["one" "two"] (redis/lrange "list" 0 1)))
+  (is (= ["one" "two" "three"] (redis/lrange "list" 0 2)))
+  (is (= ["one" "two" "three"] (redis/lrange "list" 0 42)))
+  (is (= [] (redis/lrange "list" 42 0)))
+)
+
+;; TBD
+(deftest ltrim
+  (is (thrown? Exception (redis/ltrim "foo" 0 0))))
+
+(deftest lindex
+  (is (thrown? Exception (redis/lindex "foo" 0)))
+  (is (= nil (redis/lindex "list" 42)))
+  (is (= nil (redis/lindex "list" -4)))
+  (is (= "one" (redis/lindex "list" 0)))
+  (is (= "three" (redis/lindex "list" 2)))
+  (is (= "three" (redis/lindex "list" -1))))
+
+(deftest lset
+  (is (thrown? Exception (redis/lset "foo" 0 "bar")))
+  (is (thrown? Exception (redis/lset "list" 42 "value")))
+  (redis/lset "list" 0 "test")
+  (is (= "test" (redis/lindex "list" 0)))
+  (redis/lset "list" 2 "test2")
+  (is (= "test2" (redis/lindex "list" 2)))
+  (redis/lset "list" -1 "test3")
+  (is (= "test3" (redis/lindex "list" 2))))
 
 
+;; TBD
+(deftest lrem
+  (is (thrown? Exception (redis/lrem "foo" 0 "bar")))
+  (is (= 0 (redis/lrem "list" 0 ""))))
+
+
+(deftest lpop
+  (is (thrown? Exception (redis/lpop "foo")))
+  (is (= "one" (redis/lpop "list"))))
+
+(deftest rpop
+  (is (thrown? Exception (redis/rpop "foo")))
+  (is (= "three" (redis/rpop "list"))))
+
+;;
+;; Set commands
+;;
+(deftest sadd
+  (is (thrown? Exception (redis/sadd "foo" "bar")))
+  (is (= true (redis/sadd "newset" "member")))
+  (is (= true (redis/sismember "newset" "member")))
+  (is (= false (redis/sadd "set" "two")))
+  (is (= true (redis/sadd "set" "four")))
+  (is (= true (redis/sismember "set" "four"))))
+
+(deftest srem
+  (is (thrown? Exception (redis/srem "foo" "bar")))
+  (is (thrown? Exception (redis/srem "newset" "member")))
+  (is (= true (redis/srem "set" "two")))
+  (is (= false (redis/sismember "set" "two")))
+  (is (= false (redis/srem "set" "blahonga")))
+  )
+
+(deftest smove)
+
+(deftest sismember
+  (is (thrown? Exception (redis/sismember "foo" "bar")))
+  (is (= false (redis/sismember "set" "blahonga")))
+  (is (= true (redis/sismember "set" "two")))
+  )
 
 
 (deftest select
   (testing "should select another db"
            (is (= "OK" (redis/select 0)))
            (is (= nil (redis/get "akeythat_probably_doesnotexsistindb0")))))
+
+
+
+
