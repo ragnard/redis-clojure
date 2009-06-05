@@ -22,7 +22,7 @@ This will build `redis-clojure.jar`.
 
 To run tests:
 
-    ant -Dclojure.jar=/path/to/clojure.jar -Dclojure-contrib.jar=/path/to/clojure-contrib.jar
+    ant -Dclojure.jar=/path/to/clojure.jar -Dclojure-contrib.jar=/path/to/clojure-contrib.jar test
 
 *Note* you need to have `redis-server` running first.
 
@@ -38,7 +38,7 @@ This can be accomplished like so:
 
 ## Examples
 
-Check the 'examples/' directory.
+Check the `examples/` directory.
 
 *Note* you need to have `redis-server` running first.
 
