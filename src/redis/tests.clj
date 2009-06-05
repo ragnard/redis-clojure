@@ -242,16 +242,81 @@
   (is (thrown? Exception (redis/srem "newset" "member")))
   (is (= true (redis/srem "set" "two")))
   (is (= false (redis/sismember "set" "two")))
-  (is (= false (redis/srem "set" "blahonga")))
-  )
+  (is (= false (redis/srem "set" "blahonga"))))
 
-(deftest smove)
+(deftest smove
+  (is (thrown? Exception (redis/smove "foo" "set" "one")))
+  (is (thrown? Exception (redis/smove "set" "foo" "one")))
+  (redis/sadd "set1" "two")
+  (is (= false (redis/smove "set" "set1" "four")))
+  (is (= #{"two"} (redis/smembers "set1")))
+  (is (= true (redis/smove "set" "set1" "one")))
+  (is (= #{"one" "two"} (redis/smembers "set1"))))
+
+(deftest scard
+  (is (thrown? Exception (redis/scard "foo")))
+  (is (= 3 (redis/scard "set"))))
 
 (deftest sismember
   (is (thrown? Exception (redis/sismember "foo" "bar")))
   (is (= false (redis/sismember "set" "blahonga")))
-  (is (= true (redis/sismember "set" "two")))
-  )
+  (is (= true (redis/sismember "set" "two"))))
+
+(deftest sinter
+  (is (thrown? Exception (redis/sinter "foo" "set")))
+  (is (= #{} (redis/sinter "nonexistent")))
+  (redis/sadd "set1" "one")
+  (redis/sadd "set1" "four")
+  (is (= #{"one" "two" "three"} (redis/sinter "set")))
+  (is (= #{"one"} (redis/sinter "set" "set1")))
+  (is (= #{} (redis/sinter "set" "set1" "nonexistent"))))
+
+(deftest sinterstore
+  (redis/sinterstore "foo" "set")
+  (is (= #{"one" "two" "three"} (redis/smembers "foo")))
+  (redis/sadd "set1" "one")
+  (redis/sadd "set1" "four")
+  (redis/sinterstore "newset" "set" "set1")
+  (is (= #{"one"} (redis/smembers "newset"))))
+
+(deftest sunion
+  (is (thrown? Exception (redis/sunion "foo" "set")))
+  (is (= #{} (redis/sunion "nonexistent")))
+  (redis/sadd "set1" "one")
+  (redis/sadd "set1" "four")
+  (is (= #{"one" "two" "three"} (redis/sunion "set")))
+  (is (= #{"one" "two" "three" "four"} (redis/sunion "set" "set1")))
+  (is (= #{"one" "two" "three" "four"} (redis/sunion "set" "set1" "nonexistent"))))
+
+(deftest sunionstore
+  (redis/sunionstore "foo" "set")
+  (is (= #{"one" "two" "three"} (redis/smembers "foo")))
+  (redis/sadd "set1" "one")
+  (redis/sadd "set1" "four")
+  (redis/sunionstore "newset" "set" "set1")
+  (is (= #{"one" "two" "three" "four"} (redis/smembers "newset"))))
+
+(deftest sdiff
+  (is (thrown? Exception (redis/sdiff "foo" "set")))
+  (is (= #{} (redis/sdiff "nonexistent")))
+  (redis/sadd "set1" "one")
+  (redis/sadd "set1" "four")
+  (is (= #{"one" "two" "three"} (redis/sdiff "set")))
+  (is (= #{"two" "three"} (redis/sdiff "set" "set1")))
+  (is (= #{"two" "three"} (redis/sdiff "set" "set1" "nonexistent"))))
+
+(deftest sdiffstore
+  (redis/sdiffstore "foo" "set")
+  (is (= #{"one" "two" "three"} (redis/smembers "foo")))
+  (redis/sadd "set1" "one")
+  (redis/sadd "set1" "four")
+  (redis/sdiffstore "newset" "set" "set1")
+  (is (= #{"two" "three"} (redis/smembers "newset"))))
+
+(deftest smembers
+  (is (thrown? Exception (redis/smembers "foo")))
+  (is (= #{"one" "two" "three"} (redis/smembers "set"))))
+
 
 
 (deftest select

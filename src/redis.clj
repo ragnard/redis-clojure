@@ -22,9 +22,8 @@
   [int]
   (= 1 int))
 
-(defn string-to-type
-  "Convert a string reply to a Redis type keyword,
-  either :none, :string, :list or :set"
+(defn string-to-keyword
+  "Convert a string reply to a keyword"
   [string]
   (keyword string))
 
@@ -42,59 +41,70 @@
   (let [lines (.split string "(\\r\\n|:)")]
     (apply hash-map lines)))
 
+(defn seq-to-set
+  [sequence]
+  (clojure.core/set sequence))
+
 ;;
 ;; Commands
 ;;
 (defcommands
   ;; Connection handling
-  (quit      [] :inline)
-  (ping      [] :inline)
+  (quit        [] :inline)
+  (ping        [] :inline)
   ;; String commands
-  (set       [key value] :bulk)
-  (get       [key] :inline)
-  (getset    [key value] :bulk)
-  (setnx     [key value] :bulk int-to-bool)
-  (incr      [key] :inline)
-  (incrby    [key integer] :inline)
-  (decr      [key] :inline)
-  (decrby    [key integer] :inline)
-  (exists    [key] :inline int-to-bool)
-  (mget      [key & keys] :inline)
-  (del       [key] :inline int-to-bool)
+  (set         [key value] :bulk)
+  (get         [key] :inline)
+  (getset      [key value] :bulk)
+  (setnx       [key value] :bulk int-to-bool)
+  (incr        [key] :inline)
+  (incrby      [key integer] :inline)
+  (decr        [key] :inline)
+  (decrby      [key integer] :inline)
+  (exists      [key] :inline int-to-bool)
+  (mget        [key & keys] :inline)
+  (del         [key] :inline int-to-bool)
   ;; Key space commands
-  (type      [key] :inline string-to-type)
-  (keys      [pattern] :inline string-to-seq)
-  (randomkey [] :inline)
-  (rename    [oldkey newkey] :inline)
-  (renamenx  [oldkey newkey] :inline int-to-bool)
-  (dbsize    [] :inline)
-  (expire    [key seconds] :inline int-to-bool)
-  (ttl       [key] :inline)
+  (type        [key] :inline string-to-keyword)
+  (keys        [pattern] :inline string-to-seq)
+  (randomkey   [] :inline)
+  (rename      [oldkey newkey] :inline)
+  (renamenx    [oldkey newkey] :inline int-to-bool)
+  (dbsize      [] :inline)
+  (expire      [key seconds] :inline int-to-bool)
+  (ttl         [key] :inline)
   ;; List commands
-  (rpush     [key value] :bulk)
-  (lpush     [key value] :bulk)
-  (llen      [key] :inline)
-  (lrange    [key start end] :inline)
-  (ltrim     [key start end] :inline)
-  (lindex    [key index] :inline)
-  (lset      [key index value] :bulk)
-  (lrem      [key count value] :bulk)
-  (lpop      [key] :inline)
-  (rpop      [key] :inline)
+  (rpush       [key value] :bulk)
+  (lpush       [key value] :bulk)
+  (llen        [key] :inline)
+  (lrange      [key start end] :inline)
+  (ltrim       [key start end] :inline)
+  (lindex      [key index] :inline)
+  (lset        [key index value] :bulk)
+  (lrem        [key count value] :bulk)
+  (lpop        [key] :inline)
+  (rpop        [key] :inline)
   ;; Set commands
-  (sadd      [key member] :bulk int-to-bool)
-  (srem      [key member] :bulk int-to-bool)
-  (smove     [srckey destkey member] :bulk int-to-bool)
-  (sismember [key member] :bulk int-to-bool)
+  (sadd        [key member] :bulk int-to-bool)
+  (srem        [key member] :bulk int-to-bool)
+  (smove       [srckey destkey member] :bulk int-to-bool)
+  (scard       [key] :inline)
+  (sismember   [key member] :bulk int-to-bool)
+  (sinter      [key & keys] :inline seq-to-set)
+  (sinterstore [destkey key & keys] :inline)
+  (sunion      [key & keys] :inline seq-to-set)
+  (sunionstore [destkey key & keys] :inline)
+  (sdiff       [key & keys] :inline seq-to-set)
+  (sdiffstore  [destkey key & keys] :inline)
+  (smembers    [key] :inline seq-to-set)
   ;; Multiple database handling commands
-  (select    [index] :inline)
-  (move      [key dbindex] :inline)
-  (flushdb   [] :inline)
-  (flushall  [] :inline)
+  (select      [index] :inline)
+  (move        [key dbindex] :inline)
+  (flushdb     [] :inline)
+  (flushall    [] :inline)
   ;; Sorting
   
   ;;
-  (info      [] :inline string-to-map)
-  (monitor   [] :inline))
-
-
+  (info        [] :inline string-to-map)
+  ;;(monitor     [] :inline))
+)
