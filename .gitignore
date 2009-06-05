@@ -2,3 +2,4 @@ classes
 \#*
 .\#*
 *.jar
+build.properties
