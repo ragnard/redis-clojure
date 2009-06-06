@@ -1,6 +1,7 @@
 ;(add-classpath "file:///Users/ragge/Projects/clojure/redis-clojure/src/")
 
 (ns redis
+  (:refer-clojure :exclude [get set type keys])
   (:use redis.internal))
 
 (defmacro with-server
@@ -36,7 +37,7 @@
   [#^String string]
   (if (empty? string)
     nil
-    (seq (.split string "\\s+"))))
+    (re-seq #"\S+" string)))
 
 (defn string-to-map
   "Convert strings with format 'key:value\r\n'+ to a map with {key

@@ -59,7 +59,6 @@
     (.write out bytes)))
 
 
-
 (defn read-crlf
   "Read a CR+LF combination from Reader"
   [#^Reader reader]
@@ -194,11 +193,6 @@
   ([name params type] `(defcommand ~name ~params ~type (fn [reply#] reply#)))
   ([name params type reply-fn] `(~name ~params ~type ~reply-fn)
      (do
-       (when (name (ns-map *ns*))
-         (let [var (ns-resolve *ns* name)
-               namespace (ns-name *ns*)]
-           ;(println (str "Warning: Changing mapping of '" name "' in '" namespace "'\n  Previous mapping: " var  "\n  New mapping: #'" namespace "/" name))
-           (ns-unmap *ns* name)))
        (let [command (uppercase (str name))
              command-fn (type command-fns)
              [command-params

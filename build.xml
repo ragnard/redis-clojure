@@ -37,7 +37,7 @@
     <jar jarfile="redis-clojure.jar">
       <path location="LICENSE"/>
       <fileset dir="${source.dir}" includes="**/*.clj"/>
-      <!--<fileset dir="${build.dir}" includes="**/*.class"/>-->
+      <fileset dir="${build.dir}" includes="**/*.class"/>
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
       </manifest>

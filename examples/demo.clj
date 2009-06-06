@@ -9,6 +9,8 @@
 ;; or:
 ;;   (add-classpath "file:///path/to/redis/src-dir/")
 ;;
+
+(add-classpath "file:///Users/ragge/Projects/clojure/redis-clojure/redis-clojure.jar")
 (ns demo
   (:require redis))
 
