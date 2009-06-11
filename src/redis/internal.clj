@@ -6,7 +6,7 @@
                     BufferedReader]
            [java.net Socket]))
 
-(set! *warn-on-reflection* true)
+
 
 (def *cr* 0x0d)
 (def *lf* 0x0a)
@@ -38,7 +38,8 @@
   [server]
   (let [{:keys [host port timeout]} server
         socket (Socket. #^String host #^Integer port)]
-    socket))
+    (doto socket
+      (.setTcpNoDelay true))))
 
 (defn with-server*
   [server-spec func]
@@ -81,7 +82,7 @@
   (loop [line []
          c (.read reader)]
     (when (< c 0)
-      (throw (Exception. "Error reading line: EOF reached")))
+      (throw (Exception. "Error reading line: EOF reached before CR/LF sequence")))
     (if (cr? c)
       (let [next (.read reader)]
         (if (lf? next)

@@ -1,5 +1,7 @@
 ;(add-classpath "file:///Users/ragge/Projects/clojure/redis-clojure/src/")
 
+(set! *warn-on-reflection* true)
+
 (ns redis
   (:refer-clojure :exclude [get set type keys])
   (:use redis.internal))

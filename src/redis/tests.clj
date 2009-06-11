@@ -1,4 +1,5 @@
 (ns redis.tests
+  (:refer-clojure :exclude [get set keys type])
   (:require redis)
   (:use [clojure.contrib.test-is]))
 
@@ -26,13 +27,13 @@
 (deftest ping
   (is (= "PONG" (redis/ping))))
 
-(deftest set*
+(deftest set
   (redis/set "bar" "foo")
   (is (= "foo" (redis/get "bar")))
   (redis/set "foo" "baz")
   (is (= "baz" (redis/get "foo"))))
 
-(deftest get*
+(deftest get
   (is (= nil (redis/get "bar")))
   (is (= "bar" (redis/get "foo"))))
 
@@ -87,18 +88,18 @@
   (is (= true (redis/del "foo")))
   (is (= nil  (redis/get "foo"))))
 
-(deftest type*
+(deftest type
   (is (= :none (redis/type "nonexistent")))
   (is (= :string (redis/type "foo")))
   (is (= :list (redis/type "list")))
   (is (= :set (redis/type "set"))))
 
-(deftest keys*
+(deftest keys
   (is (= nil (redis/keys "a*")))
   (is (= ["foo"] (redis/keys "f*")))
   (is (= ["foo"] (redis/keys "f?o")))
   (redis/set "fuu" "baz")
-  (is (= #{"foo" "fuu"} (set (redis/keys "f*")))))
+  (is (= #{"foo" "fuu"} (clojure.core/set (redis/keys "f*")))))
 
 (deftest randomkey
   (redis/flushdb)
@@ -177,10 +178,12 @@
 
 (deftest llen
   (is (thrown? Exception (redis/llen "foo")))
+  (is (= 0 (redis/llen "newlist")))
   (is (= 3 (redis/llen "list"))))
 
 (deftest lrange
   (is (thrown? Exception (redis/lrange "foo" 0 1)))
+  (is (= nil (redis/lrange "newlist" 0 42)))
   (is (= ["one"] (redis/lrange "list" 0 0)))
   (is (= ["three"] (redis/lrange "list" -1 -1)))
   (is (= ["one" "two"] (redis/lrange "list" 0 1)))

@@ -10,6 +10,8 @@
   <property name="lib.dir" location="lib"/>
   <property name="source.dir" location="src"/>
 
+  <property name="redis-clojure.jar" location="redis-clojure.jar"/>
+
   <target name="clean" description="Remove generated files">
     <delete file="redis-clojure.jar"/>
     <delete dir="${build.dir}"/>
@@ -34,10 +36,10 @@
   </target>
  
   <target name="jar" description="Create jar file" depends="compile">
-    <jar jarfile="redis-clojure.jar">
+    <jar jarfile="${redis-clojure.jar}">
       <path location="LICENSE"/>
       <fileset dir="${source.dir}" includes="**/*.clj"/>
-      <fileset dir="${build.dir}" includes="**/*.class"/>
+      <!--<fileset dir="${build.dir}" includes="**/*.class"/>-->
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
       </manifest>
@@ -53,6 +55,34 @@
       </classpath>
       <arg value="-e" />
       <arg value="(require 'redis.tests 'redis.tests.internal) (clojure.contrib.test-is/run-tests 'redis.tests 'redis.tests.internal)" />
+    </java>
+  </target>
+
+  <target name="bm" depends="benchmark"/>
+
+  <target name="benchmark" description="Run benchmark">
+    <java classname="clojure.main">
+      <classpath>
+        <path location="${basedir}"/>
+        <path location="${source.dir}"/>
+        <path location="${clojure.jar}"/>
+        <path location="${clojure-contrib.jar}"/>
+      </classpath>
+      <arg value="-e" />
+      <arg value="(require 'benchmarks.clojure) (benchmarks.clojure/run-all-benchmarks 'benchmarks.clojure)" />
+    </java>
+  </target>
+
+  <target name="benchmark-ruby" description="Run benchmark equivalent to the benchmarks of the Ruby library">
+    <java classname="clojure.main">
+      <classpath>
+        <path location="${basedir}"/>
+        <path location="${source.dir}"/>
+        <path location="${clojure.jar}"/>
+        <path location="${clojure-contrib.jar}"/>
+      </classpath>
+      <arg value="-e" />
+      <arg value="(require 'benchmarks.ruby)" />
     </java>
   </target>
 

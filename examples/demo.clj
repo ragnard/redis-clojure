@@ -11,6 +11,7 @@
 ;;
 
 (add-classpath "file:///Users/ragge/Projects/clojure/redis-clojure/redis-clojure.jar")
+
 (ns demo
   (:require redis))
 
