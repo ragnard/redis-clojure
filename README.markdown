@@ -44,5 +44,4 @@ Check the `examples/` directory.
 
 ## Todo
 
-* Implement `SORT` command
 * Maybe implement pipelining
