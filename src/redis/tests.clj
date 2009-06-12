@@ -372,5 +372,16 @@
   (redis/flushdb)
   (is (= 0 (redis/dbsize))))
 
+;;
+;; Persistence commands
+;;
+(deftest save
+  (redis/save))
 
+(deftest bgsave
+  (redis/bgsave))
+
+(deftest lastsave
+  (let [ages-ago (new java.util.Date (long 1))]
+    (is (.before ages-ago (redis/lastsave)))))
 

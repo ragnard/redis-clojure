@@ -48,6 +48,11 @@
   (let [lines (.split string "(\\r\\n|:)")]
     (apply hash-map lines)))
 
+(defn int-to-date
+  "Return a Date representation of a UNIX timestamp"
+  [int]
+  (new java.util.Date (long int)))
+
 (defn seq-to-set
   [sequence]
   (clojure.core/set sequence))
@@ -57,7 +62,8 @@
 ;;
 (defcommands
   ;; Connection handling
-  (quit        [] :inline)
+  (auth        [] :inline)
+  (quit        [password] :inline)
   (ping        [] :inline)
   ;; String commands
   (set         [key value] :bulk)
@@ -111,7 +117,11 @@
   (flushall    [] :inline)
   ;; Sorting
   (sort        [key & options] :sort)
-  ;;
+  ;; Persistence
+  (save        [] :inline)
+  (bgsave      [] :inline)
+  (lastsave    [] :inline int-to-date)
+  (shutdown    [] :inline)
   (info        [] :inline string-to-map)
   ;;(monitor     [] :inline))
 )
