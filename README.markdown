@@ -44,4 +44,6 @@ Check the `examples/` directory.
 
 ## Todo
 
+* Work on performance
 * Maybe implement pipelining
+
