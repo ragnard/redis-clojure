@@ -1,5 +1,5 @@
 (ns redis.tests
-  (:refer-clojure :exclude [get set keys type])
+  (:refer-clojure :exclude [get set keys type sort])
   (:require redis)
   (:use [clojure.contrib.test-is]))
 
@@ -319,6 +319,46 @@
 (deftest smembers
   (is (thrown? Exception (redis/smembers "foo")))
   (is (= #{"one" "two" "three"} (redis/smembers "set"))))
+
+
+;;
+;; Sorting
+;;
+(deftest sort
+  (redis/lpush "ids" 1)
+  (redis/lpush "ids" 4)
+  (redis/lpush "ids" 2)
+  (redis/lpush "ids" 3)
+  (redis/set "object_1" "one")
+  (redis/set "object_2" "two")
+  (redis/set "object_3" "three")
+  (redis/set "object_4" "four")
+  (redis/set "name_1" "Derek")
+  (redis/set "name_2" "Charlie")
+  (redis/set "name_3" "Bob")
+  (redis/set "name_4" "Alice")
+
+  (is (= ["one" "two" "three"]
+         (redis/sort "list")))
+  (is (= ["one" "three" "two"]
+         (redis/sort "list" :alpha)))
+  (is (= ["1" "2" "3" "4"]
+         (redis/sort "ids")))
+  (is (= ["1" "2" "3" "4"]
+         (redis/sort "ids" :asc)))
+  (is (= ["4" "3" "2" "1"]
+         (redis/sort "ids" :desc)))
+  (is (= ["1" "2"]
+         (redis/sort "ids" :asc :limit 0 2)))
+  (is (= ["4" "3"]
+         (redis/sort "ids" :desc :limit 0 2)))
+  (is (= ["4" "3" "2" "1"]
+         (redis/sort "ids" :by "name_*" :alpha)))
+  (is (= ["one" "two" "three" "four"]
+         (redis/sort "ids" :get "object_*")))
+  (is (= ["one" "two"]
+         (redis/sort "ids" :by "name_*" :alpha :limit 0 2 :desc :get "object_*"))))
+
 
 
 ;;

@@ -42,7 +42,28 @@
   (is (= "SET foo bar 3\r\nbaz\r\n"
          (redis/bulk-command "SET" "foo" "bar" "baz"))))
 
-
+(deftest sort-command
+  (is (= "SORT key\r\n"
+         (redis/sort-command "SORT" "key")))
+  (is (= "SORT key BY pattern\r\n"
+         (redis/sort-command "SORT" "key" :by "pattern")))
+  (is (= "SORT key LIMIT 0 10\r\n"
+         (redis/sort-command "SORT" "key" :limit 0 10)))
+  (is (= "SORT key ASC\r\n"
+         (redis/sort-command "SORT" "key" :asc)))
+  (is (= "SORT key DESC\r\n"
+         (redis/sort-command "SORT" "key" :desc)))
+  (is (= "SORT key ALPHA\r\n"
+         (redis/sort-command "SORT" "key" :alpha)))
+  (is (= "SORT key GET object_* GET object2_*\r\n"
+         (redis/sort-command "SORT" "key" :get "object_*" :get "object2_*")))
+  (is (= "SORT key BY weight_* LIMIT 0 10 GET object_* ALPHA DESC\r\n"
+         (redis/sort-command "SORT" "key"
+                             :by "weight_*"
+                             :limit 0 10
+                             :get "object_*"
+                             :alpha
+                             :desc))))
 
 
 ;;
@@ -126,8 +147,7 @@
   (is (= ["foo" "bar"]
          (read-reply "*2\r\n+foo\r\n+bar\r\n")))
   (is (= [1 "foo" "foo\r\nbar"]
-         (read-reply "*3\r\n:1\r\n+foo\r\n$8\r\nfoo\r\nbar\r\n")))
-  )
+         (read-reply "*3\r\n:1\r\n+foo\r\n$8\r\nfoo\r\nbar\r\n"))))
 
 
 

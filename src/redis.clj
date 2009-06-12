@@ -3,7 +3,7 @@
 (set! *warn-on-reflection* true)
 
 (ns redis
-  (:refer-clojure :exclude [get set type keys])
+  (:refer-clojure :exclude [get set type keys sort])
   (:use redis.internal))
 
 (defmacro with-server
@@ -110,7 +110,7 @@
   (flushdb     [] :inline)
   (flushall    [] :inline)
   ;; Sorting
-  ; (sort) - TBD.
+  (sort        [key & options] :sort)
   ;;
   (info        [] :inline string-to-map)
   ;;(monitor     [] :inline))

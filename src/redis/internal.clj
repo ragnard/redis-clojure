@@ -174,8 +174,45 @@
     (str cmd data "\r\n")))
 
 
+(defn- sort-command-args-to-string
+  [args]
+  (loop [arg-strings []
+         args args]
+    (if (empty? args)
+      (str-join " " arg-strings)
+      (let [type (first args)
+            args (rest args)]
+        (condp = type
+          :by (let [pattern (first args)]
+                (recur (conj arg-strings "BY" pattern)
+                       (rest args)))
+          :limit (let [start (first args)
+                       end (second args)]
+                   (recur (conj arg-strings "LIMIT" start end)
+                          (drop 2 args)))
+          :get (let [pattern (first args)]
+                 (recur (conj arg-strings "GET" pattern)
+                        (rest args)))
+          :alpha (recur (conj arg-strings "ALPHA") args)
+          :asc  (recur (conj arg-strings "ASC") args)
+          :desc (recur (conj arg-strings "DESC") args)
+          (throw (Exception. (str "Error parsing SORT arguments: Unknown argument: " type))))))))
+
+(defn sort-command
+  [name & args]
+  (when-not (= name "SORT")
+    (throw (Exception. "Sort command name must be 'SORT'")))
+  (let [key (first args)
+        arg-string (sort-command-args-to-string (rest args))
+        cmd (str "SORT " key)]
+    (if (empty? arg-string)
+      (str cmd "\r\n")
+      (str cmd " " arg-string "\r\n"))))
+
+
 (def command-fns {:inline 'inline-command
-                  :bulk   'bulk-command})
+                  :bulk   'bulk-command
+                  :sort   'sort-command})
 
 
 (defn parse-params
