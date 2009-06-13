@@ -13,7 +13,7 @@
   server-spec is a map with any of the following keys:
     :host     hostname (default \"127.0.0.1\")
     :port     port (default 6379)
-    :db       database to user (default 0)"
+    :db       database to use (default 0)"
   [server-spec & body]
   `(with-server* ~server-spec (fn []
                                 (do
