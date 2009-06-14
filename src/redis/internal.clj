@@ -91,21 +91,41 @@
       (recur (conj line (char c))
              (.read reader)))))
 
-(defn read-error-reply
-  "Read error string and throw an Exception with error string as
-  message"
+;;
+;; Reply dispatching
+;;
+
+
+
+(defn reply-type
+  ([#^BufferedReader reader]
+     (let [type (char (.read reader))]
+       type)))
+
+(defmulti parse-reply reply-type :default :unknown)
+
+(defn read-reply
+  ([]
+     (let [input-stream (.getInputStream (#^Socket socket*))
+           reader (BufferedReader. (InputStreamReader. input-stream))]
+       (read-reply reader)))
+  ([#^BufferedReader reader]
+     (parse-reply reader)))
+
+(defmethod parse-reply :unknown
+  [#^BufferedReader reader]
+  (throw (Exception. (str "Unknown reply type:"))))
+
+(defmethod parse-reply \-
   [#^BufferedReader reader]
   (let [error (read-line-crlf reader)]
     (throw (Exception. (str "Server error: " error)))))
 
-(defn read-integer-reply
-  "Read a string representation of an integer and return as an integer"
+(defmethod parse-reply \+
   [#^BufferedReader reader]
-  (let [number (trim (read-line-crlf reader))]
-    (parse-int number)))
+  (read-line-crlf reader))
 
-(defn read-bulk-reply
-  "Read a bulk reply and return as a string"
+(defmethod parse-reply \$
   [#^BufferedReader reader]
   (let [line (read-line-crlf reader)
         length (parse-int line)]
@@ -119,10 +139,7 @@
             (read-crlf reader) ;; CRLF
             (String. cbuf)))))))
 
-(def read-reply) ;; forward declaration
-
-(defn read-multi-bulk-reply
-  "Read a multi bulk reply and return as an vector of bulk replies."
+(defmethod parse-reply \*
   [#^BufferedReader reader]
   (let [line (read-line-crlf reader)
         count (parse-int line)]
@@ -134,22 +151,12 @@
           replies
           (recur (dec i) (conj replies (read-reply reader))))))))
 
-(defn read-reply
-  ([]
-     "Read a reply from socket"
-     (let [input-stream (.getInputStream (#^Socket socket*))
-           reader (BufferedReader. (InputStreamReader. input-stream))]
-       (read-reply reader)))
-  ([#^BufferedReader reader]
-     "Read a reply from a BufferedReader"
-     (let [type (char (.read reader))]
-       (condp = type
-         \- (read-error-reply reader)
-         \+ (read-line-crlf reader)
-         \$ (read-bulk-reply reader)
-         \* (read-multi-bulk-reply reader)
-         \: (read-integer-reply reader)
-         (throw (Exception. (str "Protocol error: Unknown reply type: " type)))))))
+(defmethod parse-reply \:
+  [#^BufferedReader reader]
+  (let [line (trim (read-line-crlf reader))
+        int (parse-int line)]
+    int))
+
 
 
 (defn str-join
