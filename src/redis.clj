@@ -100,6 +100,7 @@
   ;; Set commands
   (sadd        [key member] :bulk int-to-bool)
   (srem        [key member] :bulk int-to-bool)
+  (spop        [key] :inline)
   (smove       [srckey destkey member] :bulk int-to-bool)
   (scard       [key] :inline)
   (sismember   [key member] :bulk int-to-bool)
@@ -122,6 +123,7 @@
   (bgsave      [] :inline)
   (lastsave    [] :inline int-to-date)
   (shutdown    [] :inline)
+  ;; Remote control
   (info        [] :inline string-to-map)
   ;;(monitor     [] :inline))
 )
