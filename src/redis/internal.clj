@@ -7,6 +7,14 @@
            [java.net Socket]))
 
 
+(defstruct server :host :port :db :timeout :socket)
+
+(def *server* (struct-map server
+                :host     "127.0.0.1"
+                :port     6379
+                :db       0
+                :timeout  5000
+                :socket   nil))
 
 (def *cr* 0x0d)
 (def *lf* 0x0a)
@@ -18,27 +26,13 @@
 (defn- parse-int [#^String s] (Integer/parseInt s))
 (defn- char-array [len] (make-array Character/TYPE len))
 
-(def *default-host* "127.0.0.1")
-(def *default-port* 6379)
-(def *default-db* 0)
-(def *default-timeout* 5) 
-
-
-(defstruct server :host :port :db :timeout :socket)
-
-(def *server* (struct-map server
-                :host     *default-host*
-                :port     *default-port*
-                :db       *default-db*
-                :timeout  *default-timeout* ;; not yet used
-                :socket   nil))
-
 (defn connect-to-server
   "Create a Socket connected to server"
   [server]
   (let [{:keys [host port timeout]} server
         socket (Socket. #^String host #^Integer port)]
     (doto socket
+      (.setSoTimeout timeout)
       (.setTcpNoDelay true)
       (.setKeepAlive true))))
 
@@ -95,9 +89,6 @@
 ;;
 ;; Reply dispatching
 ;;
-
-
-
 (defn reply-type
   ([#^BufferedReader reader]
      (char (.read reader))))
