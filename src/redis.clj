@@ -1,10 +1,10 @@
 ;(add-classpath "file:///Users/ragge/Projects/clojure/redis-clojure/src/")
 
-(set! *warn-on-reflection* true)
-
 (ns redis
   (:refer-clojure :exclude [get set type keys sort])
   (:use redis.internal))
+
+;(set! *warn-on-reflection* true)
 
 (defmacro with-server
   "Evaluates body in the context of a new connection to a Redis server

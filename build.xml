@@ -38,8 +38,8 @@
   <target name="jar" description="Create jar file" depends="compile">
     <jar jarfile="${redis-clojure.jar}">
       <path location="LICENSE"/>
-      <fileset dir="${source.dir}" includes="**/*.clj"/>
-      <!--<fileset dir="${build.dir}" includes="**/*.class"/>-->
+      <!--<fileset dir="${source.dir}" includes="**/*.clj"/>-->
+      <fileset dir="${build.dir}" includes="**/*.class"/>
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
       </manifest>
@@ -64,7 +64,8 @@
     <java classname="clojure.main">
       <classpath>
         <path location="${basedir}"/>
-        <path location="${source.dir}"/>
+        <!--<path location="${source.dir}"/>-->
+        <path location="${redis-clojure.jar}"/>
         <path location="${clojure.jar}"/>
         <path location="${clojure-contrib.jar}"/>
       </classpath>
@@ -77,8 +78,8 @@
     <java classname="clojure.main">
       <classpath>
         <path location="${basedir}"/>
-        <path location="${source.dir}"/>
-        <!--<path location="${redis-clojure.jar}"/>-->
+        <!--<path location="${source.dir}"/>-->
+        <path location="${redis-clojure.jar}"/>
         <path location="${clojure.jar}"/>
         <path location="${clojure-contrib.jar}"/>
       </classpath>
