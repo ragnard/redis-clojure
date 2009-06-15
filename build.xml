@@ -64,8 +64,8 @@
     <java classname="clojure.main">
       <classpath>
         <path location="${basedir}"/>
-        <!--<path location="${source.dir}"/>-->
-        <path location="${redis-clojure.jar}"/>
+        <path location="${source.dir}"/>
+        <!--<path location="${redis-clojure.jar}"/>-->
         <path location="${clojure.jar}"/>
         <path location="${clojure-contrib.jar}"/>
       </classpath>
@@ -78,8 +78,8 @@
     <java classname="clojure.main">
       <classpath>
         <path location="${basedir}"/>
-        <!--<path location="${source.dir}"/>-->
-        <path location="${redis-clojure.jar}"/>
+        <path location="${source.dir}"/>
+        <!--<path location="${redis-clojure.jar}"/>-->
         <path location="${clojure.jar}"/>
         <path location="${clojure-contrib.jar}"/>
       </classpath>

@@ -30,7 +30,6 @@
   :requests)
 
 
-
 (defmacro defbenchmark [name & body]
   (let [benchmark-name (symbol (str name "-benchmark"))]
     `(def ~(with-meta benchmark-name {:benchmark true})
@@ -64,7 +63,7 @@
   (redis/get (str "key-" (rand-int 1000))))
 
 (defbenchmark set
-  (redis/set (str "key-" (rand-int 1000)) "blahojga!"))
+  (redis/set (str "key-" (rand-int 1000)) "abc"))
 
 (defbenchmark exists-set-and-get
   (let [key (str "key-" (rand-int 100))]
@@ -77,7 +76,7 @@
                          :host "127.0.0.1"
                          :port 6379
                          :db 15
-                         :clients 2
+                         :clients 1
                          :requests 10000))
 
 (defn create-clients [options]
