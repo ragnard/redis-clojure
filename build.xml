@@ -29,9 +29,11 @@
         <path location="${source.dir}"/>
         <path location="${clojure.jar}"/>
         <path location="${clojure-contrib.jar}"/>
+        <path location="${lib.dir}/netty.jar"/>
       </classpath>
       <sysproperty key="clojure.compile.path" value="${build.dir}"/>
       <arg value="redis" />
+      <arg value="redis.handler" />
     </java>
   </target>
  
@@ -68,6 +70,7 @@
         <!--<path location="${redis-clojure.jar}"/>-->
         <path location="${clojure.jar}"/>
         <path location="${clojure-contrib.jar}"/>
+        <path location="${lib.dir}/netty.jar"/>
       </classpath>
       <arg value="-e" />
       <arg value="(require 'benchmarks.clojure) (benchmarks.clojure/run-all-benchmarks 'benchmarks.clojure)" />
