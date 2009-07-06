@@ -33,7 +33,7 @@
       </classpath>
       <sysproperty key="clojure.compile.path" value="${build.dir}"/>
       <arg value="redis" />
-      <arg value="redis.handler" />
+      <!--<arg value="redis.client.default" />-->
     </java>
   </target>
  

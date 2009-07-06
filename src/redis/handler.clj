@@ -10,6 +10,7 @@
   (:gen-class
    :extends org.jboss.netty.channel.SimpleChannelHandler
    :main false
+   :name redis.handler.RedisClientHandler
    ))
 
 

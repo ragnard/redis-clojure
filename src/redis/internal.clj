@@ -1,4 +1,5 @@
 (ns redis.internal
+  (:require redis.client)
   (:import [java.io InputStream 
                     OutputStream
                     Reader
@@ -14,7 +15,7 @@
                 :port     6379
                 :db       0
                 :timeout  5000
-                :socket   nil))
+                :connection   nil))
 
 (def *cr* 0x0d)
 (def *lf* 0x0a)

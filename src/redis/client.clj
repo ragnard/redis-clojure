@@ -1,20 +1,9 @@
 (ns redis.client
-  (:import [java.net InetSocketAddress]
-           [java.util.concurrent Executors]
-           [org.jboss.netty.bootstrap ClientBootstrap]
-           [org.jboss.netty.channel Channel ChannelFactory ChannelFuture]
-           [org.jboss.netty.channel.socket.nio NioClientSocketChannelFactory]
-           ;[redis.client RedisClientHandler]
-           ;[redis handler]
-           ))
+  (:refer-clojure :exclude [send]))
 
-(defstruct client :bootstrap :channel)
+(def *client-type* :default)
 
+(defmulti connect (fn [& rest] *client-type*))
+(defmulti send (fn [& rest] *client-type*))
+(defmulti receive (fn [& rest] *client-type*))
 
-(defn create-client
-  []
-  (let [factory (NioClientSocketChannelFactory.
-                 (Executors/newCachedThreadPool)
-                 (Executors/newCachedThreadPool))
-        bootstrap (ClientBootstrap. factory)
-        handler nil]))
