@@ -33,7 +33,6 @@
       </classpath>
       <sysproperty key="clojure.compile.path" value="${build.dir}"/>
       <arg value="redis" />
-      <!--<arg value="redis.client.default" />-->
     </java>
   </target>
  
@@ -52,8 +51,10 @@
     <java classname="clojure.main">
       <classpath>
         <path location="${source.dir}"/>
+        <path location="${build.dir}"/>
         <path location="${clojure.jar}"/>
         <path location="${clojure-contrib.jar}"/>
+        <path location="${lib.dir}/netty.jar"/>
       </classpath>
       <arg value="-e" />
       <arg value="(require 'redis.tests 'redis.tests.internal) (clojure.contrib.test-is/run-tests 'redis.tests 'redis.tests.internal)" />

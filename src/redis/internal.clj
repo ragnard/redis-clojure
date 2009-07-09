@@ -1,21 +1,20 @@
 (ns redis.internal
-  (:require redis.client)
-  (:import [java.io InputStream 
-                    OutputStream
-                    Reader
-                    InputStreamReader
-                    BufferedReader]
-           [java.net Socket]))
+  (:require redis.client.default)
+  ;(:require redis.client.netty)
+  (:require redis.client.nio)
+  (:import [java.io Reader BufferedReader]))
 
 
-(defstruct server :host :port :db :timeout :socket)
+(defstruct server :host :port :db :timeout :client)
 
 (def *server* (struct-map server
                 :host     "127.0.0.1"
                 :port     6379
                 :db       0
                 :timeout  5000
-                :connection   nil))
+                :client   nil))
+
+(def *client* nil)
 
 (def *cr* 0x0d)
 (def *lf* 0x0a)
@@ -27,34 +26,12 @@
 (defn- parse-int [#^String s] (Integer/parseInt s))
 (defn- char-array [len] (make-array Character/TYPE len))
 
-(defn connect-to-server
-  "Create a Socket connected to server"
-  [server]
-  (let [{:keys [host port timeout]} server
-        socket (Socket. #^String host #^Integer port)]
-    (doto socket
-      (.setSoTimeout timeout)
-      (.setTcpNoDelay true)
-      (.setKeepAlive true))))
-
 (defn with-server*
   [server-spec func]
-  (let [server (merge *server* server-spec)]
-    (with-open [#^Socket socket (connect-to-server server)]
-      (binding [*server* (assoc server :socket socket)]
-        (func)))))
-
-(defn socket* []
-  (or (:socket *server*)
-      (throw (Exception. "Not connected to a Redis server"))))
-
-(defn send-command
-  "Send a command string to server"
-  [#^String cmd]
-  (let [out (.getOutputStream (#^Socket socket*))
-        bytes (.getBytes cmd)]
-    (.write out bytes)))
-
+  (let [server (merge *server* server-spec)
+        client (redis.client/make-client server)]
+    (binding [*server* (assoc server :client client)]
+      (func))))
 
 (defn read-crlf
   "Read a CR+LF combination from Reader"
@@ -98,8 +75,7 @@
 
 (defn read-reply
   ([]
-     (let [input-stream (.getInputStream (#^Socket socket*))
-           reader (BufferedReader. (InputStreamReader. input-stream))]
+     (let [reader (redis.client/get-reader (:client *server*))]
        (read-reply reader)))
   ([#^BufferedReader reader]
      (parse-reply reader)))
@@ -240,7 +216,8 @@
                                   ~command
                                   ~@command-params
                                   ~command-params-rest)]
-              (send-command request#)
+              ;(send-command request#)
+              (redis.client/send (:client *server*) request#)
               (~reply-fn (read-reply)))))
        
        )))
