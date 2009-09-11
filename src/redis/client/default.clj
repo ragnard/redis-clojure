@@ -32,7 +32,7 @@
         reader (BufferedReader. (InputStreamReader. in))]
     reader))
 
-(defmethod response-seq :default
+(defmethod reply-seq :default
   [#^Socket socket]
   (reader-seq (InputStreamReader. (.getInputStream socket))))
 

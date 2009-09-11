@@ -16,8 +16,8 @@
 
 (def *client* nil)
 
-(def *cr* 0x0d)
-(def *lf* 0x0a)
+(def *cr* (char 0x0d))
+(def *lf* (char 0x0a))
 (defn- cr? [c] (= c *cr*))
 (defn- lf? [c] (= c *lf*))
 
@@ -33,95 +33,107 @@
     (binding [*server* (assoc server :client client)]
       (func))))
 
-(defn read-crlf
+(defn crlf?
   "Read a CR+LF combination from Reader"
-  [#^Reader reader]
-  (let [cr (.read reader)
-        lf (.read reader)]
+  [seq]
+  (let [cr (first seq)
+        lf (second seq)]
     (when-not
         (and (cr? cr)
              (lf? lf))
       (throw (Exception. "Error reading CR/LF")))
     nil))
 
-(defn read-line-crlf
-  "Read from reader until exactly a CR+LF combination is
-  found. Returns the line read without trailing CR+LF.
 
-  This is used instead of Reader.readLine() method since it tries to
-  read either a CR, a LF or a CR+LF, which we don't want in this
-  case."
-  [#^Reader reader]
-  (loop [line []
-         c (.read reader)]
-    (when (< c 0)
-      (throw (Exception. "Error reading line: EOF reached before CR/LF sequence")))
-    (if (cr? c)
-      (let [next (.read reader)]
-        (if (lf? next)
-          (apply str line)
-          (throw (Exception. "Error reading line: Missing LF"))))
-      (recur (conj line (char c))
-             (.read reader)))))
+
+(defn take-line
+  [char-seq]
+  (let [line (take-while (fn [e] (not= *cr* e)) char-seq)
+        rest (drop (count line) char-seq)]
+    (do
+      (crlf? rest)
+      (apply str line))))
+
+(defn drop-crlf
+  [char-seq]
+  (let [cr (first char-seq)
+        lf (second char-seq)]
+    (if (and (cr? cr)
+             (lf? lf))
+      (drop 2 char-seq)
+      (throw (Exception. "Did not see CRLF")))))
+
+(defn drop-line
+  [char-seq]
+  (let [line (drop-while (fn [e] (not= *cr* e)) char-seq)
+        rest (drop-crlf line)]
+    rest))
 
 ;;
 ;; Reply dispatching
 ;;
 (defn reply-type
-  ([#^BufferedReader reader]
-     (char (.read reader))))
+  [seq]
+  (first seq))
 
 (defmulti parse-reply reply-type :default :unknown)
 
 (defn read-reply
   ([]
-     (let [reader (redis.client/get-reader (:client *server*))]
-       (read-reply reader)))
-  ([#^BufferedReader reader]
-     (parse-reply reader)))
+     (let [reply (redis.client/reply-seq (:client *server*))]
+       (parse-reply reply)))
+  ([reply]
+     (parse-reply (seq reply))))
 
 (defmethod parse-reply :unknown
-  [#^BufferedReader reader]
-  (throw (Exception. (str "Unknown reply type:"))))
+  [reply]
+  (throw (Exception. (str "Unknown reply type: " (first reply)))))
 
 (defmethod parse-reply \-
-  [#^BufferedReader reader]
-  (let [error (read-line-crlf reader)]
+  [reply]
+  (let [error (take-line (rest reply))]
     (throw (Exception. (str "Server error: " error)))))
 
 (defmethod parse-reply \+
-  [#^BufferedReader reader]
-  (read-line-crlf reader))
+  [reply]
+  (take-line (rest reply)))
 
 (defmethod parse-reply \$
-  [#^BufferedReader reader]
-  (let [line (read-line-crlf reader)
+  [reply]
+  (let [message (rest reply)
+        line (take-line message)
         length (parse-int line)]
     (if (< length 0)
       nil
-      (let [#^chars cbuf (char-array length)
-            nread (.read reader cbuf 0 length)]
-        (if (not= nread length)
-          (throw (Exception. "Could not read correct number of bytes"))
-          (do
-            (read-crlf reader) ;; CRLF
-            (String. cbuf)))))))
-
+      (let [rest (drop (+ (count line) 2) (rest reply))
+            data (take length rest)
+            end (drop length rest)]
+        (cond
+         (not= length (count data)) (throw (Exception. "Could not read correct number of bytes"))
+         (crlf? end) (throw (Exception. "Could not read terminating CR/LF"))
+         true (apply str data))))))
+                       
 (defmethod parse-reply \*
-  [#^BufferedReader reader]
-  (let [line (read-line-crlf reader)
+  [reply]
+  (let [data (rest reply)
+        line (take-line data)
         count (parse-int line)]
+    (prn data)
+    (prn line)
+    (prn count)
     (if (< count 0)
       nil
       (loop [i count
              replies []]
+        (prn replies)
         (if (zero? i)
           replies
-          (recur (dec i) (conj replies (read-reply reader))))))))
+          (recur (dec i) (conj replies (read-reply (drop-line data)))))))))
+  
 
 (defmethod parse-reply \:
-  [#^BufferedReader reader]
-  (let [line (trim (read-line-crlf reader))
+  [reply]
+  (let [line (trim (take-line (rest reply)))
         int (parse-int line)]
     int))
 
@@ -140,7 +152,7 @@
     (str cmd "\r\n")))
 
 (defn bulk-command
-  "Create a string for an bulk command"
+  "Create a string for a bulk command"
   [name & args]
   (let [data (str (last args))
         data-length (count (str data))

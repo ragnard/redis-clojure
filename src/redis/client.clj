@@ -7,7 +7,7 @@
 
 (defmulti make-client (fn [& _] *client-type*))
 
-(defmulti response-seq (fn [& _] *client-type*))
+(defmulti reply-seq (fn [& _] *client-type*))
 
 
 (defmulti send (fn [& _] *client-type*))

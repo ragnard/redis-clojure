@@ -51,13 +51,13 @@
     <java classname="clojure.main">
       <classpath>
         <path location="${source.dir}"/>
-        <path location="${build.dir}"/>
+        <!--<path location="${build.dir}"/>-->
         <path location="${clojure.jar}"/>
         <path location="${clojure-contrib.jar}"/>
         <path location="${lib.dir}/netty.jar"/>
       </classpath>
       <arg value="-e" />
-      <arg value="(require 'redis.tests 'redis.tests.internal) (clojure.contrib.test-is/run-tests 'redis.tests 'redis.tests.internal)" />
+      <arg value="(require 'redis.tests 'redis.tests.internal) (clojure.contrib.test-is/run-tests 'redis.tests.internal)" />
     </java>
   </target>
 

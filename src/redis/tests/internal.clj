@@ -15,7 +15,7 @@
 
 (defn- read-reply
   [#^String s]
-  (redis/read-reply (wrap-in-reader s)))
+  (redis/read-reply s))
 
 
 ;;
@@ -64,15 +64,19 @@
 ;;
 ;; Reply parsing
 ;;
-(deftest read-crlf
+(deftest crlf?
   (is (thrown? Exception
-               (redis/read-crlf (wrap-in-reader "\n"))))
+               (redis/crlf? "\n")))
   (is (thrown? Exception
-               (redis/read-crlf (wrap-in-reader ""))))
+               (redis/crlf? "")))
   (is (thrown? Exception
-               (redis/read-crlf (wrap-in-reader "\r1"))))
+               (redis/crlf? "\r1")))
   (is (= nil
-         (redis/read-crlf (wrap-in-reader "\r\n")))))
+         (redis/crlf? "\r\n"))))
+
+(deftest take-line
+  (is (thrown? Exception
+               (redis/take-line ""))))
 
 ;; (deftest read-newline-crlf
 ;;   (is (thrown? Exception
