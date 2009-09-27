@@ -23,7 +23,7 @@
   </target>
  
   <target name="compile" depends="init" description="Compile sources">
-    <java classname="clojure.lang.Compile"> 
+    <java classname="clojure.lang.Compile">
       <classpath>
         <path location="${build.dir}"/>
         <path location="${source.dir}"/>

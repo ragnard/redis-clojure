@@ -1,5 +1,5 @@
 (ns redis.client.nio
-  (:refer-clojure :exclude [send])
+  (:refer-clojure :exclude [send read read-line])
   (:use redis.client)
   (:import [java.net InetSocketAddress Socket]
            [java.nio ByteBuffer]

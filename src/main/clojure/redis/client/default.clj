@@ -1,38 +1,43 @@
 (ns redis.client.default
-  (:refer-clojure :exclude [send])
+  (:refer-clojure :exclude [send read read-line])
   (:use redis.client)
   (:import [java.net Socket])
   (:import [java.io Reader BufferedReader InputStreamReader]))
 
-(defn- reader-seq
-  [#^Reader reader]
-  (let [c (.read reader)]
-    (if (< 0 c)
-      (lazy-seq
-       (concat [(char c)] (reader-seq reader))))))
+
+(defstruct client-data :socket :reader)
+
+(defn- buffered-reader-for-socket
+  [#^Socket socket]
+  (let [stream (.getInputStream socket)
+        reader (BufferedReader. (InputStreamReader. stream))]
+    reader))
 
 (defmethod make-client :default [server-spec]
   (let [{:keys [host port timeout]} server-spec
-        socket (Socket. #^String host #^Integer port)]
+        socket (Socket. #^String host #^Integer port)
+        reader (buffered-reader-for-socket socket)]
     (doto socket
       (.setSoTimeout timeout)
       (.setTcpNoDelay true)
-      (.setKeepAlive true))))
-
+      (.setKeepAlive true))
+    (struct client-data socket reader)))
 
 (defmethod send :default
-  [#^Socket socket #^String command]
-  (let [out (.getOutputStream socket)
+  [client-data #^String command]
+  (let [socket (client-data :socket)
+        out (.getOutputStream socket)
         bytes (.getBytes command)]
     (.write out bytes)))
 
-(defmethod get-reader :default
-  [#^Socket socket]
-  (let [in (.getInputStream socket)
-        reader (BufferedReader. (InputStreamReader. in))]
-    reader))
+(defmethod read :default
+  [client-data count]
+  (let [reader (client-data :reader)]
+    (char (.read reader))))
 
-(defmethod reply-seq :default
-  [#^Socket socket]
-  (reader-seq (InputStreamReader. (.getInputStream socket))))
+(defmethod read-line :default
+  [client-data]
+  (let [reader (client-data :reader)]
+    (.readLine reader)))
+
 

@@ -1,4 +1,5 @@
 (ns redis.internal
+  (:refer-clojure :exclude [send read read-line])
   (:require redis.client.default)
   ;(:require redis.client.netty)
   ;(:require redis.client.nio)
@@ -8,13 +9,11 @@
 (defstruct connection :host :port :db :timeout :client)
 
 (def *connection* (struct-map connection
-                :host     "127.0.0.1"
-                :port     6379
-                :db       0
-                :timeout  5000
-                :client   nil))
-
-(def *client* nil)
+                    :host     "127.0.0.1"
+                    :port     6379
+                    :db       0
+                    :timeout  5000
+                    :client   nil))
 
 (def *cr* (char 0x0d))
 (def *lf* (char 0x0a))
@@ -46,12 +45,13 @@
 
 
 (defn read
-  [client n]
-  (redis.client/read client n))
+  (let [client (*connection* client)]
+    (redis.client/read client)))
 
-(defn read-line
-  [client]
-  (redis.client/read-line client))
+
+;(defn read-line
+;  [client]
+;  (redis.client/read-line client))
 
 
 (defn take-line
@@ -81,8 +81,8 @@
 ;; Reply dispatching
 ;;
 (defn reply-type
-  [seq]
-  (first seq))
+  [client]
+  (redis.client/read))
 
 (defmulti parse-reply reply-type :default :unknown)
 
@@ -147,7 +147,10 @@
 
 
 
-(defn str-join
+;;
+;; Command functions
+;;
+(defn- str-join
   "Join elements in sequence with separator"
   [separator sequence]
   (apply str (interpose separator sequence)))

@@ -1,18 +1,23 @@
 (ns redis.client
-  (:refer-clojure :exclude [send])
-  ;(:require redis.client.default)
-  )
+  (:refer-clojure :exclude [send read read-line]))
 
 (def *client-type* :default)
+(defn- client-type [] *client-type*)
 
-(defmulti make-client (fn [& _] *client-type*))
+(defn with-client*
+  [type func]
+  (binding [*client-type* type]
+    (func)))
 
-(defmulti reply-seq (fn [& _] *client-type*))
+(defmacro with-client
+  [type body]
+  `(with-client* ~type (fn [] ~@body)))
 
+(defmulti make-client client-type)
 
-(defmulti read (fn [& _] *client-type*))
-(defmulti read-line (fn [& _] *client-type*))
+(defmulti read client-type)
+(defmulti read-line client-type)
 
-(defmulti send (fn [& _] *client-type*))
-(defmulti get-reader (fn [& _] *client-type*))
+(defmulti send client-type)
+
 
