@@ -1,5 +1,3 @@
-;(add-classpath "file:///Users/ragge/Projects/clojure/redis-clojure/src/")
-
 (ns redis
   (:refer-clojure :exclude [get set type keys sort])
   (:use redis.internal))
@@ -17,7 +15,7 @@
   [server-spec & body]
   `(with-server* ~server-spec (fn []
                                 (do
-                                  (redis/select (:db *server*))
+                                  (redis/select (:db *connection*))
                                   ~@body))))
 
 

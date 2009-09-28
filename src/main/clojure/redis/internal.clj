@@ -1,22 +1,25 @@
 (ns redis.internal
   (:refer-clojure :exclude [send read read-line])
-  (:require redis.client.default)
+  ;(:require redis.client.default)
   ;(:require redis.client.netty)
   ;(:require redis.client.nio)
-  (:import [java.io Reader BufferedReader]))
+  (:import [java.io Reader BufferedReader InputStreamReader StringReader]
+           [java.net Socket]))
 
 
-(defstruct connection :host :port :db :timeout :client)
+(defstruct connection :host :port :db :timeout :socket :reader :writer)
 
 (def *connection* (struct-map connection
                     :host     "127.0.0.1"
                     :port     6379
                     :db       0
                     :timeout  5000
-                    :client   nil))
+                    :socket   nil
+                    :reader   nil
+                    :writer   nil))
 
-(def *cr* (char 0x0d))
-(def *lf* (char 0x0a))
+(def *cr*  0x0d)
+(def *lf*  0x0a)
 (defn- cr? [c] (= c *cr*))
 (defn- lf? [c] (= c *lf*))
 
@@ -25,127 +28,133 @@
 (defn- parse-int [#^String s] (Integer/parseInt s))
 (defn- char-array [len] (make-array Character/TYPE len))
 
+(defn connect-to-server
+  "Create a Socket connected to server"
+  [server]
+  (let [{:keys [host port timeout]} server
+        socket (Socket. #^String host #^Integer port)]
+    (doto socket
+      (.setTcpNoDelay true)
+      (.setKeepAlive true))))
+ 
 (defn with-server*
   [server-spec func]
-  (let [server (merge *connection* server-spec)
-        client (redis.client/make-client server)]
-    (binding [*connection* (assoc server :client client)]
-      (func))))
+  (let [connection (merge *connection* server-spec)]
+    (with-open [#^Socket socket (connect-to-server connection)]
+      (let [input-stream (.getInputStream socket)
+            output-stream (.getOutputStream socket)
+            reader (BufferedReader. (InputStreamReader. input-stream))]
+        (binding [*connection* (assoc connection 
+                                 :socket socket
+                                 :reader reader)]
+          (func))))))
+ 
+(defn socket* []
+  (or (:socket *connection*)
+      (throw (Exception. "Not connected to a Redis server"))))
 
-(defn crlf?
+(defn send-command
+  "Send a command string to server"
+  [#^String cmd]
+  (let [out (.getOutputStream (#^Socket socket*))
+        bytes (.getBytes cmd)]
+    (.write out bytes)))
+ 
+ 
+(defn read-crlf
   "Read a CR+LF combination from Reader"
-  [seq]
-  (let [cr (first seq)
-        lf (second seq)]
+  [#^Reader reader]
+  (let [cr (.read reader)
+        lf (.read reader)]
     (when-not
         (and (cr? cr)
              (lf? lf))
       (throw (Exception. "Error reading CR/LF")))
     nil))
+ 
+(defn read-line-crlf
+  "Read from reader until exactly a CR+LF combination is
+  found. Returns the line read without trailing CR+LF.
+ 
+  This is used instead of Reader.readLine() method since it tries to
+  read either a CR, a LF or a CR+LF, which we don't want in this
+  case."
+  [#^BufferedReader reader]
+  (loop [line []
+         c (.read reader)]
+    (when (< c 0)
+      (throw (Exception. "Error reading line: EOF reached before CR/LF sequence")))
+    (if (cr? c)
+      (let [next (.read reader)]
+        (if (lf? next)
+          (apply str line)
+          (throw (Exception. "Error reading line: Missing LF"))))
+      (recur (conj line (char c))
+             (.read reader)))))
+ 
 
-
-(defn read
-  (let [client (*connection* client)]
-    (redis.client/read client)))
-
-
-;(defn read-line
-;  [client]
-;  (redis.client/read-line client))
-
-
-(defn take-line
-  [char-seq]
-  (let [line (take-while (fn [e] (not= *cr* e)) char-seq)
-        rest (drop (count line) char-seq)]
-    (do
-      (crlf? rest)
-      (apply str line))))
-
-(defn drop-crlf
-  [char-seq]
-  (let [cr (first char-seq)
-        lf (second char-seq)]
-    (if (and (cr? cr)
-             (lf? lf))
-      (drop 2 char-seq)
-      (throw (Exception. "Did not see CRLF")))))
-
-(defn drop-line
-  [char-seq]
-  (let [line (drop-while (fn [e] (not= *cr* e)) char-seq)
-        rest (drop-crlf line)]
-    rest))
 
 ;;
 ;; Reply dispatching
 ;;
 (defn reply-type
-  [client]
-  (redis.client/read))
+  ([#^BufferedReader reader]
+     (char (.read reader))))
 
 (defmulti parse-reply reply-type :default :unknown)
 
 (defn read-reply
   ([]
-     (let [reply (redis.client/reply-seq (:client *connection*))]
-       (parse-reply reply)))
-  ([reply]
-     (parse-reply (seq reply))))
+     (let [reader (*connection* :reader)]
+       (read-reply reader)))
+  ([#^BufferedReader reader]
+     (parse-reply reader)))
 
 (defmethod parse-reply :unknown
-  [reply]
-  (throw (Exception. (str "Unknown reply type: " (first reply)))))
-
+  [#^BufferedReader reader]
+  (throw (Exception. (str "Unknown reply type:"))))
+ 
 (defmethod parse-reply \-
-  [reply]
-  (let [error (take-line (rest reply))]
+  [#^BufferedReader reader]
+  (let [error (read-line-crlf reader)]
     (throw (Exception. (str "Server error: " error)))))
-
+ 
 (defmethod parse-reply \+
-  [reply]
-  (take-line (rest reply)))
-
+  [#^BufferedReader reader]
+  (read-line-crlf reader))
+ 
 (defmethod parse-reply \$
-  [reply]
-  (let [message (rest reply)
-        line (take-line message)
+  [#^BufferedReader reader]
+  (let [line (read-line-crlf reader)
         length (parse-int line)]
     (if (< length 0)
       nil
-      (let [rest (drop (+ (count line) 2) (rest reply))
-            data (take length rest)
-            end (drop length rest)]
-        (cond
-         (not= length (count data)) (throw (Exception. "Could not read correct number of bytes"))
-         (crlf? end) (throw (Exception. "Could not read terminating CR/LF"))
-         true (apply str data))))))
-                       
+      (let [#^chars cbuf (char-array length)
+            nread (.read reader cbuf 0 length)]
+        (if (not= nread length)
+          (throw (Exception. "Could not read correct number of bytes"))
+          (do
+            (read-crlf reader) ;; CRLF
+            (String. cbuf)))))))
+ 
 (defmethod parse-reply \*
-  [reply]
-  (let [data (rest reply)
-        line (take-line data)
+  [#^BufferedReader reader]
+  (let [line (read-line-crlf reader)
         count (parse-int line)]
-    (prn data)
-    (prn line)
-    (prn count)
     (if (< count 0)
       nil
       (loop [i count
              replies []]
-        (prn replies)
         (if (zero? i)
           replies
-          (recur (dec i) (conj replies (read-reply (drop-line data)))))))))
-  
-
+          (recur (dec i) (conj replies (read-reply reader))))))))
+ 
 (defmethod parse-reply \:
-  [reply]
-  (let [line (trim (take-line (rest reply)))
+  [#^BufferedReader reader]
+  (let [line (trim (read-line-crlf reader))
         int (parse-int line)]
     int))
-
-
+ 
 
 ;;
 ;; Command functions
@@ -239,8 +248,7 @@
                                   ~command
                                   ~@command-params
                                   ~command-params-rest)]
-              ;(send-command request#)
-              (redis.client/send (:client *connection*) request#)
+              (send-command request#)
               (~reply-fn (read-reply)))))
        
        )))
