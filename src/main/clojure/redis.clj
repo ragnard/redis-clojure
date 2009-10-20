@@ -74,6 +74,7 @@
   (decrby      [key integer] :inline)
   (exists      [key] :inline int-to-bool)
   (mget        [key & keys] :inline)
+  (mset        [key value & more] :bulk)
   (del         [key] :inline int-to-bool)
   ;; Key space commands
   (type        [key] :inline string-to-keyword)

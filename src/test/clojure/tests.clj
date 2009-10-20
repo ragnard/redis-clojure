@@ -1,7 +1,7 @@
 (ns redis.tests
   (:refer-clojure :exclude [get set keys type sort])
   (:require redis)
-  (:use [clojure.contrib.test-is]))
+  (:use [clojure.test]))
 
 
 (defn server-fixture [f]
@@ -50,8 +50,15 @@
   (is (= ["bar"] (redis/mget "foo")))
   (is (= ["bar" "baz"] (redis/mget "foo" "bar")))
   (is (= ["bar" "baz" "buz"] (redis/mget "foo" "bar" "baz")))
-  (is (= ["bar" nil "buz"] (redis/mget "foo" "bra" "baz")))
-  )
+  (is (= ["bar" nil "buz"] (redis/mget "foo" "bra" "baz"))))
+
+(deftest mset
+  (is (thrown?  Exception (redis/mset "key1"))) 
+  (is (thrown?  Exception (redis/mset "key" "value" "key1")))
+  (redis/mset "key1" "value1" "key2" "value2" "key3" "value3")
+  (is (= "value1" (redis/get "key1")))
+  (is (= "value2" (redis/get "key2")))
+  (is (= "value3" (redis/get "key3"))))
 
 (deftest setnx
   (is (= true (redis/setnx "bar" "foo")))

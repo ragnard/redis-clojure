@@ -1,6 +1,6 @@
 (ns redis.tests.internal
   (:require [redis.internal :as redis])
-  (:use [clojure.contrib.test-is])
+  (:use [clojure.test])
   (:import [java.io StringReader BufferedReader]))
 
 

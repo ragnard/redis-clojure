@@ -2,15 +2,18 @@
   <description>
     Redis client library for Clojure.
   </description>
- 
-  <property file="build.properties"/>
 
+  <property file="build.properties" />
+                  
   <property name="dist.dir" location="dist"/>
-  <property name="build.dir" location="classes"/>
+  <property name="build.dir" location="target/classes"/>
   <property name="lib.dir" location="lib"/>
-  <property name="source.dir" location="src"/>
+  <property name="source.dir" location="src/main/clojure"/>
+  <property name="test.dir" location="src/test/clojure"/>
 
   <property name="redis-clojure.jar" location="redis-clojure.jar"/>
+
+
 
   <target name="clean" description="Remove generated files">
     <delete file="redis-clojure.jar"/>
@@ -51,13 +54,11 @@
     <java classname="clojure.main">
       <classpath>
         <path location="${source.dir}"/>
-        <!--<path location="${build.dir}"/>-->
+        <path location="${test.dir}"/>
         <path location="${clojure.jar}"/>
-        <path location="${clojure-contrib.jar}"/>
-        <path location="${lib.dir}/netty.jar"/>
       </classpath>
       <arg value="-e" />
-      <arg value="(require 'redis.tests 'redis.tests.internal) (clojure.contrib.test-is/run-tests 'redis.tests.internal)" />
+      <arg value="(require 'tests 'tests.internal) (clojure.test/run-tests 'redis.tests 'redis.tests.internal)" />
     </java>
   </target>
 
@@ -68,10 +69,7 @@
       <classpath>
         <path location="${basedir}"/>
         <path location="${source.dir}"/>
-        <!--<path location="${redis-clojure.jar}"/>-->
         <path location="${clojure.jar}"/>
-        <path location="${clojure-contrib.jar}"/>
-        <path location="${lib.dir}/netty.jar"/>
       </classpath>
       <arg value="-e" />
       <arg value="(require 'benchmarks.clojure) (benchmarks.clojure/run-all-benchmarks 'benchmarks.clojure)" />
@@ -83,9 +81,7 @@
       <classpath>
         <path location="${basedir}"/>
         <path location="${source.dir}"/>
-        <!--<path location="${redis-clojure.jar}"/>-->
         <path location="${clojure.jar}"/>
-        <path location="${clojure-contrib.jar}"/>
       </classpath>
       <arg value="-e" />
       <arg value="(require 'benchmarks.ruby)" />
