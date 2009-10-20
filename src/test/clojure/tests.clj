@@ -56,9 +56,15 @@
   (is (thrown?  Exception (redis/mset "key1"))) 
   (is (thrown?  Exception (redis/mset "key" "value" "key1")))
   (redis/mset "key1" "value1" "key2" "value2" "key3" "value3")
-  (is (= "value1" (redis/get "key1")))
-  (is (= "value2" (redis/get "key2")))
-  (is (= "value3" (redis/get "key3"))))
+  (is (= ["value1" "value2" "value3"] (redis/mget "key1" "key2" "key3"))))
+
+(deftest msetnx
+  (is (thrown? Exception (redis/msetnx "key1")))
+  (is (thrown? Exception (redis/msetnx "key1" "value1" "key2")))
+  (is (= true (redis/msetnx "key1" "value1" "key2" "value2" "key3" "value3")))
+  (is (= ["value1" "value2" "value3"] (redis/mget "key1" "key2" "key3")))
+  (is (= false (redis/msetnx "key4" "value4" "key2" "newvalue" "key5" "value5")))
+  (is (= [nil "value2" nil] (redis/mget "key4" "key2" "key5"))))
 
 (deftest setnx
   (is (= true (redis/setnx "bar" "foo")))

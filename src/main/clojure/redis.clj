@@ -75,6 +75,7 @@
   (exists      [key] :inline int-to-bool)
   (mget        [key & keys] :inline)
   (mset        [key value & more] :bulk)
+  (msetnx      [key value & more] :bulk int-to-bool)
   (del         [key] :inline int-to-bool)
   ;; Key space commands
   (type        [key] :inline string-to-keyword)
