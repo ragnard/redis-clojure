@@ -2,8 +2,6 @@
   (:refer-clojure :exclude [get set type keys sort])
   (:use redis.internal))
 
-;(set! *warn-on-reflection* true)
-
 (defmacro with-server
   "Evaluates body in the context of a new connection to a Redis server
   then closes the connection.
@@ -17,7 +15,6 @@
                                 (do
                                   (redis/select (:db *connection*))
                                   ~@body))))
-
 
 ;;
 ;; Reply conversion functions
@@ -45,6 +42,11 @@
   [#^String string]
   (let [lines (.split string "(\\r\\n|:)")]
     (apply hash-map lines)))
+
+(defn string-to-double
+  "Convert a string in floating point format to a double"
+  [string]
+  (Double/parseDouble string))
 
 (defn int-to-date
   "Return a Date representation of a UNIX timestamp"
@@ -111,6 +113,12 @@
   (sdiff       [key & keys] :inline seq-to-set)
   (sdiffstore  [destkey key & keys] :inline)
   (smembers    [key] :inline seq-to-set)
+  ;; ZSet commands
+  (zadd        [key score member] :bulk int-to-bool)
+  (zrem        [key member] :bulk int-to-bool)
+  (zscore      [key member] :bulk string-to-double)
+  (zrange      [key start end] :inline)
+  (zrangebyscore [key start end] :inline)
   ;; Multiple database handling commands
   (select      [index] :inline)
   (move        [key dbindex] :inline)

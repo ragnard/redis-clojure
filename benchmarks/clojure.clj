@@ -1,10 +1,5 @@
-
-
-(add-classpath "file:///Users/ragge/Projects/clojure/redis-clojure/redis-clojure.jar")
-
 (ns benchmarks.clojure
-  (:use clojure.contrib.pprint)
-  (:require redis))
+    (:require redis))
 
 (defstruct benchmark-options
   :host
@@ -15,7 +10,6 @@
   :key-size
   :keyspace-size
   :data-size)
-
 
 (defstruct client
   :id
@@ -76,7 +70,7 @@
                          :host "127.0.0.1"
                          :port 6379
                          :db 15
-                         :clients 1
+                         :clients 2
                          :requests 10000))
 
 (defn create-clients [options]
@@ -151,7 +145,7 @@
     (let [elapsed (/ (double (- (System/nanoTime) start)) 1000000.0)]
       (dorun
        (map #(when (agent-errors %)
-               (pprint (agent-errors %))) clients))
+               (pr (agent-errors %))) clients))
       (assoc result
         :name (str fn)
         :options options

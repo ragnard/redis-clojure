@@ -1,11 +1,9 @@
 (ns redis.internal
   (:refer-clojure :exclude [send read read-line])
-  ;(:require redis.client.default)
-  ;(:require redis.client.netty)
-  ;(:require redis.client.nio)
   (:import [java.io Reader BufferedReader InputStreamReader StringReader]
            [java.net Socket]))
 
+(set! *warn-on-reflection* true)
 
 (defstruct connection :host :port :db :timeout :socket :reader :writer)
 
@@ -76,9 +74,9 @@
   "Read from reader until exactly a CR+LF combination is
   found. Returns the line read without trailing CR+LF.
  
-  This is used instead of Reader.readLine() method since it tries to
-  read either a CR, a LF or a CR+LF, which we don't want in this
-  case."
+  This is used instead of Reader.readLine() method since that method
+  tries to read either a CR, a LF or a CR+LF, which we don't want in
+  this case."
   [#^BufferedReader reader]
   (loop [line []
          c (.read reader)]

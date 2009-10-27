@@ -202,12 +202,14 @@
   (is (= ["one" "two"] (redis/lrange "list" 0 1)))
   (is (= ["one" "two" "three"] (redis/lrange "list" 0 2)))
   (is (= ["one" "two" "three"] (redis/lrange "list" 0 42)))
-  (is (= [] (redis/lrange "list" 42 0)))
-)
+  (is (= [] (redis/lrange "list" 42 0))))
 
-;; TBD
 (deftest ltrim
-  (is (thrown? Exception (redis/ltrim "foo" 0 0))))
+  (is (thrown? Exception (redis/ltrim "foo" 0 0)))
+  (redis/ltrim "list" 0 1)
+  (is (= ["one" "two"] (redis/lrange "list" 0  99)))
+  (redis/ltrim "list" 1 99)
+  (is (= ["two"] (redis/lrange "list" 0  99))))
 
 (deftest lindex
   (is (thrown? Exception (redis/lindex "foo" 0)))
@@ -342,6 +344,46 @@
 (deftest smembers
   (is (thrown? Exception (redis/smembers "foo")))
   (is (= #{"one" "two" "three"} (redis/smembers "set"))))
+
+;;
+;; ZSet commands
+;;
+(deftest zadd
+  (is (thrown? Exception (redis/zadd "foo" 1 "bar")))
+  (is (= true (redis/zadd "zset" 3.141592 "foo")))
+  (is (= true (redis/zadd "zset" -42 "bar")))
+  (is (= true (redis/zadd "zset" 2393845792384752345239485723984534589739284579348.349857983457398457934857 "baz")))
+  (is (= ["bar" "foo"] (redis/zrange "zset" 0 1))))
+
+(deftest zrem
+  (is (thrown? Exception (redis/zrem "foo" "bar")))
+  (is (= false (redis/zrem "zset" "foobar")))
+  (redis/zadd "zset" 1.0 "one")
+  (redis/zadd "zset" 2.0 "two")
+  (redis/zadd "zset" 3.0 "three")
+  (is (= true (redis/zrem "zset" "two")))
+  (is (= ["one" "three"] (redis/zrange "zset" 0 1))))
+
+(deftest zscore
+  (is (thrown? Exception (redis/zscore "foo")))
+  (redis/zadd "zset" 3.141592 "pi")
+  (is (= 3.141592 (redis/zscore "zset" "pi")))
+  (redis/zadd "zset" -42 "neg")
+  (is (= -42 (redis/zscore "zset" "neg"))))
+
+
+(deftest zrange
+  (is (thrown? Exception (redis/zrange "foo")))
+  (is (= nil (redis/zrange "zset" 0 99)))
+  (redis/zadd "zset" 12349809.23873948579348750 "one")
+  (redis/zadd "zset" -42 "two")
+  (redis/zadd "zset" 3.141592 "three")
+  (is (= ["two" "three" "one"] (redis/zrange "zset" 0 2)))
+  (is (= ["three" "one"] (redis/zrange "zset" 1 2))))
+
+(deftest zrangebyscore
+  (is (thrown? Exception (redis/zrangebyscore "foo")))
+  (is (= nil (redis/zrangebyscore "zset" 0 99))))
 
 
 ;;
