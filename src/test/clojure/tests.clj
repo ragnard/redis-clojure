@@ -378,13 +378,19 @@
   (redis/zadd "zset" 12349809.23873948579348750 "one")
   (redis/zadd "zset" -42 "two")
   (redis/zadd "zset" 3.141592 "three")
+  (is (= [] (redis/zrange "zset" -1 -2)))
   (is (= ["two" "three" "one"] (redis/zrange "zset" 0 2)))
   (is (= ["three" "one"] (redis/zrange "zset" 1 2))))
 
 (deftest zrangebyscore
   (is (thrown? Exception (redis/zrangebyscore "foo")))
-  (is (= nil (redis/zrangebyscore "zset" 0 99))))
-
+  (is (= nil (redis/zrangebyscore "zset" 0 99)))
+  (redis/zadd "zset" 1.0 "one")
+  (redis/zadd "zset" 2.0 "two")
+  (redis/zadd "zset" 3.0 "three")
+  (is (= [] (redis/zrangebyscore "zset" -42 0.99)))
+  (is (= ["two"] (redis/zrangebyscore "zset" 1.1 2.9)))
+  (is (= ["two" "three"] (redis/zrangebyscore "zset" 1.0000001 3.00001))))
 
 ;;
 ;; Sorting
