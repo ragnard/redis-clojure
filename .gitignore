@@ -1,5 +1,6 @@
 redis-clojure.jar
 classes
+lib
 \#*
 .\#*
 build.properties
