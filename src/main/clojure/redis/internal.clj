@@ -120,6 +120,11 @@
 (defmethod parse-reply \+
   [#^BufferedReader reader]
   (read-line-crlf reader))
+
+(defn- do-read [#^Reader reader #^chars cbuf offset length]
+  (let [nread (.read reader cbuf offset length)]
+    (if (not= nread length)
+      (recur reader cbuf (+ offset nread) (- length nread)))))
  
 (defmethod parse-reply \$
   [#^BufferedReader reader]
@@ -127,14 +132,12 @@
         length (parse-int line)]
     (if (< length 0)
       nil
-      (let [#^chars cbuf (char-array length)
-            nread (.read reader cbuf 0 length)]
-        (if (not= nread length)
-          (throw (Exception. "Could not read correct number of bytes"))
-          (do
-            (read-crlf reader) ;; CRLF
-            (String. cbuf)))))))
- 
+      (let [#^chars cbuf (char-array length)]
+        (do
+          (do-read reader cbuf 0 length)
+          (read-crlf reader) ;; CRLF
+          (String. cbuf))))))
+
 (defmethod parse-reply \*
   [#^BufferedReader reader]
   (let [line (read-line-crlf reader)
