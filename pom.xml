@@ -9,7 +9,7 @@
   <scm>
     <connection>scm:git:git://github.com/ragnard/redis-clojure.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ragnard/redis-clojure.git</developerConnection>
-    <tag>e78f5f9c85a2d56e919a614c9428c58acdb91ed1</tag>
+    <tag>1795f54bc7186f2675e0a5432cb0516b225c8472</tag>
     <url>http://github.com/ragnard/redis-clojure</url>
   </scm>
   <repositories>

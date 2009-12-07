@@ -95,6 +95,11 @@
 ;;
 ;; Reply dispatching
 ;;
+(defn- do-read [#^Reader reader #^chars cbuf offset length]
+  (let [nread (.read reader cbuf offset length)]
+    (if (not= nread length)
+      (recur reader cbuf (+ offset nread) (- length nread)))))
+
 (defn reply-type
   ([#^BufferedReader reader]
      (char (.read reader))))
@@ -121,11 +126,6 @@
   [#^BufferedReader reader]
   (read-line-crlf reader))
 
-(defn- do-read [#^Reader reader #^chars cbuf offset length]
-  (let [nread (.read reader cbuf offset length)]
-    (if (not= nread length)
-      (recur reader cbuf (+ offset nread) (- length nread)))))
- 
 (defmethod parse-reply \$
   [#^BufferedReader reader]
   (let [line (read-line-crlf reader)
