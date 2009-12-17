@@ -1,2 +1,0 @@
-#java -cp /Users/ragge/Development/clojure/clojure-1.0/clojure.jar:/Users/ragge/Projects/clojure/redis-clojure/src/:. clojure.main -e "(require 'benchmarks.ruby)"
-java -cp /Users/ragge/Development/clojure/clojure-1.0/clojure.jar:/Users/ragge/Projects/clojure/redis-clojure/src/:. clojure.main -e "(require 'benchmarks.ruby)"
