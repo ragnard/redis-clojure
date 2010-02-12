@@ -5,3 +5,4 @@ lib
 .\#*
 build.properties
 target
+pom.xml
