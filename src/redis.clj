@@ -13,6 +13,8 @@
   [server-spec & body]
   `(with-server* ~server-spec (fn []
                                 (do
+                                  (if (:password *connection*)
+                                    (redis/auth (:password *connection*)))
                                   (redis/select (:db *connection*))
                                   ~@body))))
 
@@ -62,8 +64,8 @@
 ;;
 (defcommands
   ;; Connection handling
-  (auth        [] :inline)
-  (quit        [password] :inline)
+  (auth        [password] :inline)
+  (quit        [] :inline)
   (ping        [] :inline)
   ;; String commands
   (set         [key value] :bulk)
