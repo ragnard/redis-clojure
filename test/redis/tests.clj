@@ -418,6 +418,40 @@
   (redis/zadd "zset" 1.0 "one")
   (is (= 1 (redis/zcard "zset"))))
 
+;;
+;; MULTI/EXEC/DISCARD
+;;
+(deftest multi-exec
+  (redis/set "key" "value")
+  (redis/multi)
+  (is (= "QUEUED" (redis/set "key" "blahonga")))
+  (redis/exec)
+  (is (= "blahonga" (redis/get "key"))))
+
+(deftest multi-exec
+  (redis/set "key" "value")
+  (redis/multi)
+  (is (= "QUEUED" (redis/set "key" "blahonga")))
+  (redis/discard)
+  (is (= "value" (redis/get "key"))))
+
+(deftest atomically
+  (redis/set "key" "value")
+  (is (= ["OK" "OK" "blahong"]
+       (redis/atomically
+        (redis/set "key" "blahonga")
+        (redis/set "key2" "blahong")
+        (redis/get "key2"))))
+  (is (= "blahonga" (redis/get "key"))))
+
+(deftest atomically-with-exception
+  (redis/set "key" "value")
+  (is (thrown? Exception 
+               (redis/atomically
+                (redis/set "key" "blahonga")
+                (throw (Exception. "Fail"))
+                (redis/set "key2" "blahong"))))
+  (is (= "value" (redis/get "key"))))
 
 ;;
 ;; Sorting

@@ -18,6 +18,22 @@
                                   (redis/select (:db *connection*))
                                   ~@body))))
 
+(defmacro atomically
+  "Execute all redis commands in body atomically, ie. sandwiched in a
+  MULTI/EXEC statement. If an exception is thrown the EXEC command
+  will be terminated by a DISCARD, no operations will be performed and
+  the exception will be rethrown." 
+  [& body]
+  `(do 
+     (redis/multi) 
+     (try
+      (do 
+        ~@body
+        (redis/exec))
+      (catch Exception e#
+        (redis/discard)
+        (throw e#)))))
+
 ;;
 ;; Reply conversion functions
 ;;
@@ -118,6 +134,10 @@
   (zrevrange   [key start end] :inline)
   (zrangebyscore [key start end] :inline)
   (zremrangebyscore [key start end] :inline)
+  ;; MULTI/EXEC/DISCARD
+  (multi       [] :inline)
+  (exec        [] :inline)
+  (discard     [] :inline)
   ;; Multiple database handling commands
   (select      [index] :inline)
   (move        [key dbindex] :inline)
