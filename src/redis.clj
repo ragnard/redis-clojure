@@ -31,13 +31,6 @@
   [string]
   (keyword string))
 
-(defn string-to-seq
-  "Convert a space separated string to a sequence of words"
-  [#^String string]
-  (if (empty? string)
-    nil
-    (re-seq #"\S+" string)))
-
 (defn string-to-map
   "Convert strings with format 'key:value\r\n'+ to a map with {key
   value} pairs"
@@ -83,7 +76,7 @@
   (del         [key] :inline int-to-bool)
   ;; Key space commands
   (type        [key] :inline string-to-keyword)
-  (keys        [pattern] :inline string-to-seq)
+  (keys        [pattern] :inline)
   (randomkey   [] :inline)
   (rename      [oldkey newkey] :inline)
   (renamenx    [oldkey newkey] :inline int-to-bool)
@@ -118,6 +111,7 @@
   ;; ZSet commands
   (zadd        [key score member] :bulk int-to-bool)
   (zrem        [key member] :bulk int-to-bool)
+  (zincrby     [key increment member] :bulk string-to-double)
   (zscore      [key member] :bulk string-to-double)
   (zrange      [key start end] :inline)
   (zrangebyscore [key start end] :inline)

@@ -364,13 +364,18 @@
   (is (= true (redis/zrem "zset" "two")))
   (is (= ["one" "three"] (redis/zrange "zset" 0 1))))
 
+(deftest zincrby
+  (is (thrown? Exception (redis/zincrby "foo")))
+  (is (= 3.141592 (redis/zincrby "zset" 3.141592 "value")))
+  (is (= 42.141593) (redis/zincrby "zset" 42.00001 "value"))
+  (is (= 3.141592) (redis/zincrby "zset" -42.00001 "value")))
+
 (deftest zscore
   (is (thrown? Exception (redis/zscore "foo")))
   (redis/zadd "zset" 3.141592 "pi")
   (is (= 3.141592 (redis/zscore "zset" "pi")))
   (redis/zadd "zset" -42 "neg")
   (is (= -42 (redis/zscore "zset" "neg"))))
-
 
 (deftest zrange
   (is (thrown? Exception (redis/zrange "foo")))
@@ -391,6 +396,8 @@
   (is (= [] (redis/zrangebyscore "zset" -42 0.99)))
   (is (= ["two"] (redis/zrangebyscore "zset" 1.1 2.9)))
   (is (= ["two" "three"] (redis/zrangebyscore "zset" 1.0000001 3.00001))))
+
+
 
 ;;
 ;; Sorting
