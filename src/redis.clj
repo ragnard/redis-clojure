@@ -113,6 +113,7 @@
   (zrem        [key member] :bulk int-to-bool)
   (zincrby     [key increment member] :bulk string-to-double)
   (zscore      [key member] :bulk string-to-double)
+  (zcard       [key] :inline)
   (zrange      [key start end] :inline)
   (zrevrange   [key start end] :inline)
   (zrangebyscore [key start end] :inline)

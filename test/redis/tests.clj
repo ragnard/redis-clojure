@@ -404,6 +404,11 @@
   (is (= ["two"] (redis/zrangebyscore "zset" 1.1 2.9)))
   (is (= ["two" "three"] (redis/zrangebyscore "zset" 1.0000001 3.00001))))
 
+(deftest zcard
+  (is (thrown? Exception (redis/zcard "foo")))
+  (is (= 0 (redis/zcard "zset")))
+  (redis/zadd "zset" 1.0 "one")
+  (is (= 1 (redis/zcard "zset"))))
 
 
 ;;
