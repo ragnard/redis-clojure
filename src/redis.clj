@@ -128,6 +128,7 @@
   ;; Persistence
   (save        [] :inline)
   (bgsave      [] :inline)
+  (bgrewriteaof [] :inline)
   (lastsave    [] :inline int-to-date)
   (shutdown    [] :inline)
   ;; Remote control

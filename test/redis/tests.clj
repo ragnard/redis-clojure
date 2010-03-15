@@ -481,6 +481,9 @@
 (deftest bgsave
   (redis/bgsave))
 
+(deftest bgrewriteaof
+  (redis/bgrewriteaof))
+
 (deftest lastsave
   (let [ages-ago (new java.util.Date (long 1))]
     (is (.before ages-ago (redis/lastsave)))))
