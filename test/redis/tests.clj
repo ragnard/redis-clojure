@@ -455,7 +455,9 @@
   (is (= ["one" "two" "three" "four"]
          (redis/sort "ids" :get "object_*")))
   (is (= ["one" "two"]
-         (redis/sort "ids" :by "name_*" :alpha :limit 0 2 :desc :get "object_*"))))
+         (redis/sort "ids" :by "name_*" :alpha :limit 0 2 :desc :get "object_*")))
+  (redis/sort "ids" :by "name_*" :alpha :limit 0 2 :desc :get "object_*" :store "result")
+  (is (= ["one" "two"] (redis/lrange "result" 0 -1))))
 
 
 

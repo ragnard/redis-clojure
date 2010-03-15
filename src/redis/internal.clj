@@ -203,6 +203,9 @@
           :get (let [pattern (first args)]
                  (recur (conj arg-strings "GET" pattern)
                         (rest args)))
+          :store (let [key (first args)]
+                   (recur (conj arg-strings "STORE" key)
+                          (rest args)))
           :alpha (recur (conj arg-strings "ALPHA") args)
           :asc  (recur (conj arg-strings "ASC") args)
           :desc (recur (conj arg-strings "DESC") args)
