@@ -108,7 +108,7 @@
   (is (= :set (redis/type "set"))))
 
 (deftest keys
-  (is (= nil (redis/keys "a*")))
+  (is (= [] (redis/keys "a*")))
   (is (= ["foo"] (redis/keys "f*")))
   (is (= ["foo"] (redis/keys "f?o")))
   (redis/set "fuu" "baz")
@@ -131,8 +131,7 @@
   (redis/set "bar" "baz")
   (redis/rename "foo" "bar")
   (is (= "bar" (redis/get "bar")))
-  (is (= nil (redis/get "foo")))
-  )
+  (is (= nil (redis/get "foo"))))
 
 (deftest renamenx
   (is (thrown? Exception (redis/renamenx "foo" "foo")))
