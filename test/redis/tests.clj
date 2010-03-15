@@ -141,8 +141,7 @@
   (is (= nil (redis/get "foo")))
   (redis/set "foo" "bar")
   (redis/set "bar" "baz")
-  (is (= false (redis/renamenx "foo" "bar")))
-  )
+  (is (= false (redis/renamenx "foo" "bar"))))
 
 (deftest dbsize
   (let [size-before (redis/dbsize)]
@@ -158,8 +157,7 @@
   (redis/set "foo" "bar")
   (is (= true (redis/expire "foo" 20)))
   (is (= false (redis/expire "foo" 10)))
-  (is (= false (redis/expire "nonexistent" 42)))
-  )
+  (is (= false (redis/expire "nonexistent" 42))))
 
 (deftest ttl
   (is (= -1 (redis/ttl "nonexistent")))
@@ -385,6 +383,16 @@
   (is (= [] (redis/zrange "zset" -1 -2)))
   (is (= ["two" "three" "one"] (redis/zrange "zset" 0 2)))
   (is (= ["three" "one"] (redis/zrange "zset" 1 2))))
+
+(deftest zrevrange
+  (is (thrown? Exception (redis/zrevrange "foo")))
+  (is (= nil (redis/zrevrange "zset" 0 99)))
+  (redis/zadd "zset" 12349809.23873948579348750 "one")
+  (redis/zadd "zset" -42 "two")
+  (redis/zadd "zset" 3.141592 "three")
+  (is (= [] (redis/zrevrange "zset" -1 -2)))
+  (is (= ["one" "three" "two"] (redis/zrevrange "zset" 0 2)))
+  (is (= ["three" "two"] (redis/zrevrange "zset" 1 2))))
 
 (deftest zrangebyscore
   (is (thrown? Exception (redis/zrangebyscore "foo")))
