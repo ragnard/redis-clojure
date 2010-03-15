@@ -117,6 +117,7 @@
   (zrange      [key start end] :inline)
   (zrevrange   [key start end] :inline)
   (zrangebyscore [key start end] :inline)
+  (zremrangebyscore [key start end] :inline)
   ;; Multiple database handling commands
   (select      [index] :inline)
   (move        [key dbindex] :inline)

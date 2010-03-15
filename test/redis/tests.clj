@@ -404,6 +404,14 @@
   (is (= ["two"] (redis/zrangebyscore "zset" 1.1 2.9)))
   (is (= ["two" "three"] (redis/zrangebyscore "zset" 1.0000001 3.00001))))
 
+(deftest zremrangebyscore
+  (is (thrown? Exception (redis/zremrangebyscore "foo")))
+  (is (= 0 (redis/zremrangebyscore "zset" 0 42.4)))
+  (redis/zadd "zset" 1.0 "one")
+  (redis/zadd "zset" 2.0 "two")
+  (redis/zadd "zset" 3.0 "three")
+  (is (= 1 (redis/zremrangebyscore "zset" 2.0 2.999999))))
+
 (deftest zcard
   (is (thrown? Exception (redis/zcard "foo")))
   (is (= 0 (redis/zcard "zset")))
