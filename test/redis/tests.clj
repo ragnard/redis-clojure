@@ -428,7 +428,7 @@
   (redis/exec)
   (is (= "blahonga" (redis/get "key"))))
 
-(deftest multi-exec
+(deftest multi-discard
   (redis/set "key" "value")
   (redis/multi)
   (is (= "QUEUED" (redis/set "key" "blahonga")))
