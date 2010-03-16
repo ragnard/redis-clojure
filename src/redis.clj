@@ -57,7 +57,8 @@
 (defn string-to-double
   "Convert a string in floating point format to a double"
   [string]
-  (Double/parseDouble string))
+  (if string
+    (Double/parseDouble string)))
 
 (defn int-to-date
   "Return a Date representation of a UNIX timestamp"
