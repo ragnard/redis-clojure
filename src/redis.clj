@@ -135,6 +135,17 @@
   (zrevrange   [key start end] :inline)
   (zrangebyscore [key start end] :inline)
   (zremrangebyscore [key start end] :inline)
+  ;; Hash commands
+  (hset        [key field value] :bulk int-to-bool)
+  (hget        [key field] :bulk);;;;
+  (hmset       [key field value & more] :bulk)
+  (hincrby     [key field integer] :inline)
+  (hexists     [key field] :bulk int-to-bool);;;
+  (hdel        [key field] :bulk int-to-bool);;;
+  (hlen        [key] :inline)
+  (hkeys       [key] :inline)
+  (hvals       [key] :inline)
+  (hgetall     [key] :inline)  
   ;; MULTI/EXEC/DISCARD
   (multi       [] :inline)
   (exec        [] :inline)

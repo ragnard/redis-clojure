@@ -19,6 +19,10 @@
    (redis/sadd "set" "one")
    (redis/sadd "set" "two")
    (redis/sadd "set" "three")
+   ;; Hash with three fields
+   (redis/hset "hash" "one" "foo")
+   (redis/hset "hash" "two" "bar")
+   (redis/hset "hash" "three" "baz")
    (f)
    (redis/flushdb)))
                      
@@ -417,6 +421,62 @@
   (is (= 0 (redis/zcard "zset")))
   (redis/zadd "zset" 1.0 "one")
   (is (= 1 (redis/zcard "zset"))))
+
+;;
+;; Hash commands
+;;
+(deftest hset
+  (is (thrown? Exception (redis/hset "foo" "baz" "poe")))
+  (redis/hset "bar" "foo" "hoge")
+  (is (= "hoge" (redis/hget "bar" "foo")))
+
+(deftest hget
+  (is (= nil (redis/hget "bar" "baz")))
+  (is (= "bar" (redis/hget "hash" "two"))))
+
+(deftest hset
+  (is (thrown? Exception (redis/hmset "key1" "field1"))) 
+  (is (thrown? Exception (redis/hmset "key" "field" "value" "feild1")))
+  (redis/hmset "key1" "field1" "value1" "field2" "value2" "field3" "value3")
+  (is (= ["value1" "value2" "value3"] (redis/hvals "key1"))))
+
+(deftest hincrby
+  (is (= 42 (redis/hincrby "non-exist-key" "non-exist-field" 42)))
+  (is (thrown? Exception (redis/hincrby "foo" "bar" 0)))
+  (is (= 0 (redis/hincrby "key1" "field1" 0))))
+  (is (= 5 (redis/hincrby "key1" "field1" 5))))
+
+(deftest hexists
+  (is (= true (redis/hexists "hash" "one")))
+  (is (= false (redis/hexists "non-exist-key" "non-exist-field"))))
+
+(deftest hdel
+  (is (= false (redis/hdel "non-exist-key" "non-exist-field")))
+  (is (= true (redis/hdel "hash" "three")))
+  (is (= nil  (redis/hget "hash" "three"))))
+
+(deftest hlen
+  (is (thrown? Exception (redis/hlen "foo")))
+  (is (= 0 (redis/hlen "newhash")))
+  (is (= 3 (redis/hlen "hash"))))
+
+(deftest hkeys
+  (is (= nil (redis/hkeys "noexistent")))
+  (is (= ["one" "two" "three"] (redis/hkeys "hash")))
+  (redis/hset "hash" "four" "hoge")
+  (is (= 4 (count (redis/hkeys "hash")))))
+
+(deftest hvals
+  (is (= nil (redis/hvals "noexistent")))
+  (is (= ["foo" "bar" "baz"] (redis/hvals "hash")))
+  (redis/hdel "hash" "two")
+  (is (= ["foo" "baz"] (redis/hvals "hash"))))
+
+(deftest hgetall
+  (is (= nil (redis/hgetall "noexistent")))
+  (is (= ["one" "foo" "two" "bar" "three" "baz"] (redis/hgetall "hash")))
+  (redis/hdel "hash" "one")
+  (is (= {"two" "bar", "three" "baz"} (apply hash-map (redis/hgetall "hash")))))
 
 ;;
 ;; MULTI/EXEC/DISCARD
