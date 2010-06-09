@@ -111,6 +111,7 @@
   (lrem        [key count value] :bulk)
   (lpop        [key] :inline)
   (rpop        [key] :inline)
+  (rpoplpush   [srckey dstkey] :inline)
   ;; Set commands
   (sadd        [key member] :bulk int-to-bool)
   (srem        [key member] :bulk int-to-bool)
