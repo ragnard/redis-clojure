@@ -238,7 +238,7 @@
   "Define a function for Redis command name with parameters
   params. Type is one of :inline, :bulk or :sort, which determines how
   the command string is constructed."
-  ([name params type] `(defcommand ~name ~params ~type (fn [reply#] reply#)))
+  ([name params type] `(defcommand ~name ~params ~type identity))
   ([name params type reply-fn] `(~name ~params ~type ~reply-fn)
      (do
        (let [command (uppercase (str name))
