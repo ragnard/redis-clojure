@@ -1,8 +1,5 @@
 redis-clojure.jar
-classes
-lib
 \#*
 .\#*
-build.properties
 target
-pom.xml
+
