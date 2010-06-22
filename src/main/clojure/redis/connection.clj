@@ -3,7 +3,7 @@
   (:import [java.net Socket]
            [java.io BufferedInputStream]))
 
-;;; Protocols
+;;;; Protocols
 (defprotocol RedisConnection
   (close [connection])
   (input-stream [connection])
@@ -11,15 +11,14 @@
 
 (defprotocol RedisConnectionPool
   (get-connection [pool connection-spec])
-  (release-connection [pool connection]))
+  (release-connection [pool connection] [pool connection exception]))
 
-
+;;;; Implementations
 (extend-type Socket
   RedisConnection
   (close [this] (.close this))
   (input-stream [this] (BufferedInputStream. (.getInputStream this)))
   (output-stream [this] (.getOutputStream this)))
-
 
 (def default-connection-spec {:host "127.0.0.1"
                               :port 6379
@@ -41,7 +40,9 @@
   (get-connection [this connection-spec]
     (make-connection connection-spec))
   (release-connection [this connection]
-     (close connection)))
+                      (close connection))
+  (release-connection [this connection exception]
+                      (close connection)))
 
 (defn make-non-pooled-connection-pool []
   (NonPooledConnectionPool.))

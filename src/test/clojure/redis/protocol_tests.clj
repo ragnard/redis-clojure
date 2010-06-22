@@ -61,12 +61,12 @@
     (testing "should return the message as a string"
       (is (= "OK"
              (get-reply "+OK\r\n")))))
-  
+
   (testing "An integer reply"
     (testing "should return the integer value")
     (is (= 42
            (get-reply ":42\r\n"))))
-  
+
   (testing "A bulk reply"
     (testing "should return nil for negative bulk lengths"
       (is (= nil

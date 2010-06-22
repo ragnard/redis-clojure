@@ -1,107 +1,49 @@
 (ns redis 
   (:refer-clojure :exclude [get keys set send sort read read-line type])
-  (:use [redis channels connection protocol]))
+  (:use [redis defcommand channel connection protocol pipeline]))
 
+;;;; Global vars
 
-(def *pool* (make-non-pooled-connection-pool))
-(def *channel* (make-debug-channel))
+(def #^{:doc "Bound to an implementation of RedisConnectionPool"}
+     *pool*
+     (make-non-pooled-connection-pool))
 
-(defmacro with-server [server-spec & body]
-  `(let [connection# (get-connection *pool* ~server-spec)]
+(def #^{:doc "Bound to an implementation of RedisChannel"}
+     *channel* nil)
+
+;;;; Macros
+
+(defmacro with-server
+  "Evaluates body in the context of a connection to Redis server
+  specified by server-spec.
+
+  server-spec is a map with any of the following keys:
+    :host     (\"127.0.0.1\")
+    :port     (6379)
+    :db       (0)
+    :timeout  (5000)
+    :password (nil)"
+   [server-spec & body]
+   `(let [connection# (get-connection *pool* ~server-spec)]
      (try
        (binding [*channel* (make-direct-channel connection#)]
          ~@body)
+       (catch Exception e#
+         (release-connection *pool* connection# e#))
        (finally
         (release-connection *pool* connection#)))))
 
-(defmacro pipeline [& body]
+(defmacro pipeline
+  "Evaluate body, pipelining any Redis commands. Commands in body will
+  return nil, and pipeline will return a vector of replies."
+  [& body]
   `(binding [*channel* (make-pipelined-channel *channel*)]
      ~@body
      (send-pipelined-commands *channel*)))
 
-(defn- upcase [#^String s] (.toUpperCase s))
+;;;; Command definitions
 
-(defn default-key-fn [args]
-  "Return a vector of keys in args.
-
-   This default implementation detects keys in three ways:
-     - The argument is named key
-     - The argument is a vector named keys
-     - The argument is a vector named keyvals"
-  (loop [args args
-         keys []]
-    (let [[first & rest] args]
-      (if (nil? first)
-        keys
-        (if (= 'key first)
-          (recur rest (conj keys identity))
-          (recur rest (conj keys nil))))))) 
-
-(defn get-key-values [key-fns args]
-  (vec (filter #(not (nil? %))
-               (map #(when (not (nil? %1))
-                       (%1 %2)) key-fns args))))
-
-(def *default-opts* {:type     :multi-bulk
-                     :reply-fn identity
-                     :key-fn   default-key-fn})
-
-(def *command-types* {:inline make-inline-command
-                      :multi-bulk make-multi-bulk-command})
-
-;;;
-;;;
-;;;
-
-(defn parse-opts+body [opts+body]
-  (loop [opts *default-opts*
-         args opts+body]
-    (let [[v & rest] args]
-      (cond
-       (nil? v) [opts nil]
-       (list? v) [opts v]
-       (or (var? v)
-           (symbol? v)
-           (fn? v)) (recur (assoc opts :reply-fn v) rest)
-       (keyword? v) (condp = v
-                        :inline     (recur (assoc opts :type v) rest)
-                        :multi-bulk (recur (assoc opts :type v) rest))))))
-
-(defn flatten-args [args]
-  (let [[args rest] (split-with #(not= % '&) args)]
-    [args (last rest)]))
-
-
-
-(defmacro defcommand
-  ([name args & opts+body]
-     (let [[opts body] (parse-opts+body opts+body)
-           {:keys [type reply-fn key-fn]} opts
-           command-name (upcase (str name))
-           command-fn (type *command-types*)
-           [command-args command-rest-args] (flatten-args args)
-           args-without-and (vec (filter #(not= '& %) args))
-           key-fns (key-fn args-without-and)]
-       (if body
-         `(defn ~name ~args
-            (let [command# ~body]
-              (send *channel* command#)))
-         `(defn ~name ~args
-            (let [command# (apply ~command-fn
-                                  ~command-name
-                                  ~@command-args
-                                  ~command-rest-args)
-                  keys# (get-key-values ~key-fns ~args-without-and)]
-              (~reply-fn (send *channel*
-                               (with-meta command#
-                                 {:redis-keys (vec keys#)})))))))))
-
-(defmacro defcommands [& command-defs]
-  `(do ~@(map (fn [command-def]
-                `(defcommand ~@command-def)) command-defs)))
-
-
-
+;;; Utility conversion functions
 (defn int-to-bool [n] (< 0 n))
 (defn string-to-keyword [s] (keyword s))
 (defn string-to-double [s] (when s (Double/parseDouble s)))
@@ -204,6 +146,7 @@
   (hgetall     [key] seq-to-map)
 )
 
+;;; Sort command
 
 (defn- parse-sort-args [args]
   (loop [bulks []
@@ -225,8 +168,6 @@
             :asc   (recur (conj bulks "ASC") args)
             :desc  (recur (conj bulks "DESC") args)
             (throw (Exception. (str "Error parsing arguments to SORT command: Unknown argument: " type))))))))
-
-
 
 (defcommand sort [key & args] 
   (with-meta

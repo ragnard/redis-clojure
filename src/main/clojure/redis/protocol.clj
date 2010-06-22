@@ -1,11 +1,11 @@
 (ns redis.protocol
   (:refer-clojure :exclude [read read-line send])
   (:import [java.net Socket]
-           [java.io InputStream 
-                    OutputStream 
+           [java.io InputStream
+                    OutputStream
                     BufferedInputStream
                     BufferedOutputStream
-                    ByteArrayOutputStream 
+                    ByteArrayOutputStream
                     ByteArrayInputStream]))
 
 ;;;
@@ -33,7 +33,7 @@
 (defn- read-expected-byte [#^InputStream stream expected]
   (let [actual (.read stream)
         expected (int expected)]
-    (cond 
+    (cond
      (= actual expected) actual
      (= actual -1) (throw (Exception. "End of stream reached"))
      true (throw (Exception. (format "Expected byte: 0x%1$x, read 0x%2$x" expected actual))))))
@@ -53,7 +53,7 @@
   (read-crlf [this]
     (read-expected-byte this CR)
     (read-expected-byte this LF))
-  
+
   (read-line [this]
     (let [buf (ByteArrayOutputStream.)]
       (loop [byte (.read this)]
@@ -77,7 +77,7 @@
 
 (defn read-reply [channel])
 
-(defn- read-error-reply [channel] 
+(defn- read-error-reply [channel]
   (let [message (read-line channel)]
     (throw (Exception. message))))
 
@@ -184,7 +184,7 @@ Stream"
   (write-to-buffer [this buf]
     (let [nbulks (count bulks)]
       (write-bulk-header buf nbulks)
-      (dorun 
+      (dorun
        (map #(write-bulk buf %) bulks))))
 
   Object

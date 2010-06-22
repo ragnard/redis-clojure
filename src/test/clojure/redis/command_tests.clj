@@ -24,7 +24,7 @@
    (redis/hset "hash" "three" "baz")
    (f)
    (redis/flushdb)))
-                     
+
 (use-fixtures :each server-fixture)
 
 (deftest ping
