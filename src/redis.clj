@@ -136,6 +136,7 @@
   (zrevrange   [key start end] :inline)
   (zrangebyscore [key start end] :inline)
   (zremrangebyscore [key start end] :inline)
+  (zrank [key member] :bulk)
   ;; Hash commands
   (hset        [key field value] :bulk int-to-bool)
   (hget        [key field] :bulk);;;;
