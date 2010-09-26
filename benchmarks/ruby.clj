@@ -39,12 +39,12 @@
   (measure-time
    (dotimes [i n]
      (let [key (str "foo" i)]
-       (redis/pipeline 
+       (redis/pipeline
         (redis/set key (apply str (repeat 10 key)))
         (redis/get key))))))
 
 (defn run-benchmark [fn iterations]
-  (redis/with-server 
+  (redis/with-server
     {:db 15}
     (let [elapsed (apply fn iterations nil)
           kops (* 2 (/ iterations 1000 elapsed))]

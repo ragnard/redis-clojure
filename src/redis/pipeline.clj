@@ -1,13 +1,16 @@
 (ns redis.pipeline
   (:refer-clojure :exclude [send read read-line])
-  (:use [redis channel connection protocol])
+  (:use [redis.core :only (*channel*)]
+        [redis.channel :only (RedisChannel)]
+        [redis.connection :only (input-stream output-stream)]
+        [redis.protocol :only (write-to-buffer write-to-stream read-reply)])
   (:import [java.io ByteArrayOutputStream]
            [java.net SocketTimeoutException]))
 
 
 (defrecord PipelinedChannel [channel commands]
   RedisChannel
-  (send [this command]
+  (send! [this command]
     (swap! commands conj command)
     nil))
 
@@ -27,12 +30,22 @@
     (write-to-stream buf out)
     (let [reply (transient [])]
       (dotimes [i ncommands]
-        (try 
+        (try
           (conj! reply (read-reply in))
           (catch SocketTimeoutException e
             (throw e))
           (catch Exception e
             (conj! reply e))))
       (persistent! reply))))
+
+(defmacro pipeline
+  "Evaluate body, pipelining any Redis commands. Commands in body will
+  return nil, and pipeline will return a vector of replies.
+
+  Any exceptions will be caught and returned in the reply vector."
+  [& body]
+  `(binding [redis.core/*channel* (make-pipelined-channel redis.core/*channel*)]
+     ~@body
+     (send-pipelined-commands *channel*)))
 
 

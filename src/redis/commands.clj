@@ -1,61 +1,23 @@
-(ns redis 
-  (:refer-clojure :exclude [get keys set send sort read read-line type])
-  (:use [redis defcommand channel connection protocol pipeline]))
+(ns redis.commands
+  (:refer-clojure :exclude (type keys get set sort))
+  (:use [redis.defcommand :only (defcommand defcommands)]
+        [redis.protocol :only (make-multi-bulk-command)]))
 
-;;;; Global vars
+;;; Command definitions
 
-(def #^{:doc "Bound to an implementation of RedisConnectionPool"}
-     *pool*
-     (make-non-pooled-connection-pool))
-
-(def #^{:doc "Bound to an implementation of RedisChannel"}
-     *channel* nil)
-
-;;;; Macros
-
-(defmacro with-server
-  "Evaluates body in the context of a connection to Redis server
-  specified by server-spec.
-
-  server-spec is a map with any of the following keys:
-    :host     (\"127.0.0.1\")
-    :port     (6379)
-    :db       (0)
-    :timeout  (5000)
-    :password (nil)"
-   [server-spec & body]
-   `(let [connection# (get-connection *pool* ~server-spec)]
-     (try
-       (binding [*channel* (make-direct-channel connection#)]
-         ~@body)
-       (catch Exception e#
-         (release-connection *pool* connection# e#))
-       (finally
-        (release-connection *pool* connection#)))))
-
-(defmacro pipeline
-  "Evaluate body, pipelining any Redis commands. Commands in body will
-  return nil, and pipeline will return a vector of replies."
-  [& body]
-  `(binding [*channel* (make-pipelined-channel *channel*)]
-     ~@body
-     (send-pipelined-commands *channel*)))
-
-;;;; Command definitions
-
-;;; Utility conversion functions
-(defn int-to-bool [n] (< 0 n))
-(defn string-to-keyword [s] (keyword s))
-(defn string-to-double [s] (when s (Double/parseDouble s)))
-(defn seq-to-set [seq] (when seq (clojure.core/set seq)))
-(defn seq-to-map [seq] (when seq (apply hash-map seq)))
+;; Utility conversion functions
+(defn- int-to-bool [n] (< 0 n))
+(defn- string-to-keyword [s] (keyword s))
+(defn- string-to-double [s] (when s (Double/parseDouble s)))
+(defn- seq-to-set [seq] (when seq (clojure.core/set seq)))
+(defn- seq-to-map [seq] (when seq (apply hash-map seq)))
 
 (defcommands
-  ;; Connection handling
-  (quit        [] :inline)
+  ; Connection handling
+  (quit        [] :inline )
   (auth        [password])
   (ping        [] :inline)
-  ;; Commands operating on all types
+  ; Commands operating on all types
   (exists      [key] int-to-bool)
   (del         [key & keys])
   (type        [key] string-to-keyword)
@@ -70,7 +32,7 @@
   (move        [key dbindex])
   (flushdb     [] :inline)
   (flushall    [] :inline)
-  ;; String commands
+  ; String commands
   (get         [key])
   (set         [key val])
   (getset      [key val])
@@ -85,7 +47,7 @@
   (decrby      [key int])
   (append      [key val])
   (substr      [key start end])
-  ;; List commands
+  ; List commands
   (rpush       [key value])
   (lpush       [key value])
   (llen        [key])
@@ -96,11 +58,11 @@
   (lrem        [key count value])
   (lpop        [key])
   (rpop        [key])
-  ;; TODO:
-  ;; blpop
-  ;; brpop
+  ; TODO:
+  ; blpop
+  ; brpop
   (rpoplpush   [srckey destkey])
-  ;; Set commands
+  ; Set commands
   (sadd        [key member] int-to-bool)
   (srem        [key member] int-to-bool)
   (spop        [key])
@@ -115,7 +77,7 @@
   (sdiffstore  [destkey key & keys])
   (smembers    [key] seq-to-set)
   (srandmember [key])
-  ;; Sorted Set commands
+  ; Sorted Set commands
   (zadd        [key score member] int-to-bool)
   (zrem        [key member] int-to-bool)
   (zincrby     [key increment member] string-to-double)
@@ -128,10 +90,10 @@
   (zremrangebyscore [key start end])
   (zcard       [key])
   (zscore      [key member] string-to-double)
-  ;; TODO:
-  ;; zunionstore
-  ;; zinterstore
-  ;; Hash commands
+  ; TODO:
+  ; zunionstore
+  ; zinterstore
+  ; Hash commands
   (hset        [key field val])
   (hget        [key field])
   (hsetnx      [key field val] int-to-bool)
@@ -143,10 +105,9 @@
   (hlen        [key])
   (hkeys       [key])
   (hvals       [key])
-  (hgetall     [key] seq-to-map)
-)
+  (hgetall     [key] seq-to-map))
 
-;;; Sort command
+;; Sort command
 
 (defn- parse-sort-args [args]
   (loop [bulks []
@@ -173,4 +134,3 @@
   (with-meta
     (apply make-multi-bulk-command "SORT" key (parse-sort-args args))
     {:redis-keys [key]}))
-

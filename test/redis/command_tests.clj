@@ -1,10 +1,11 @@
 (ns redis.command-tests
-  (:refer-clojure :exlude [get set])
-  (:require [redis])
-  (:use [clojure.test]))
+  (:refer-clojure :exclude [keys type get set sort])
+  (:use [clojure.test]
+        [redis.core :only (with-server)])
+  (:require [redis.commands :as redis]))
 
 (defn server-fixture [f]
-  (redis/with-server
+  (with-server
    {:host "127.0.0.1"
     :port 6379
     :db 15}
@@ -29,7 +30,6 @@
 
 (deftest ping
   (is (= "PONG" (redis/ping))))
-
 
 (deftest exists
   (is (= true (redis/exists "foo")))
@@ -650,27 +650,3 @@
 
 
 
-;(def watcher (watch-spec "/Users/ragge/Projects/clojure/redis-clojure-new/src"))
-
-;; (defcontext connection []
-;;   (redis.connection/make-connection {:host "127.0.0.1"
-;;                                      :port 6379
-;;                                      :db 15}))
-
-
-;; (describe *ns*
-
-;;   (spec PING "PING" 
-;;     (spec "should return PONG"
-;;       (using [c connection]
-;;         (redis.connection/with-connection c
-;;           (is (= "PONG" (redis/ping)))))))
-  
-;;   (spec "GET"
-;;     (spec "should return nil for nonexistent keys"
-;;       (is (nil? (redis/get "nonexistantkey"))))
-    
-;;     (spec "should return string value at key"))
-
-;;   (spec "SET"
-;;     (spec "should set value at key")))

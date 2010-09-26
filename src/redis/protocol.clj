@@ -72,10 +72,9 @@
 ;;
 ;; Replies
 ;;
+(declare read-reply)
 
 (defn- parse-int [string] (Integer/parseInt string))
-
-(defn read-reply [channel])
 
 (defn- read-error-reply [channel]
   (let [message (read-line channel)]
@@ -110,15 +109,13 @@
 
 (defn read-reply [channel]
   (let [type (read channel 1)]
-    (condp = type
+    (case type
       "-" (read-error-reply channel)
       "+" (read-single-line-reply channel)
       "$" (read-bulk-reply channel)
       "*" (read-multi-bulk-reply channel)
       ":" (read-integer-reply channel)
       (throw (Exception. (format "Unknown reply type: %1$c" type))))))
-
-
 
 ;;
 ;; Commands
@@ -134,9 +131,7 @@ Stream"
   "A RedisCommand knows how to write itself to a RedisBuffer"
   (write-to-buffer [command buf]))
 
-
-
-;; We extend ByteArrayOutputStream to support the RedisBuffer protocol
+;; Extend ByteArrayOutputStream to support the RedisBuffer protocol
 (extend-type ByteArrayOutputStream
   RedisBuffer
   (put-byte [this #^Integer byte] (.write this byte))
@@ -198,56 +193,4 @@ Stream"
     (throw (IllegalArgumentException.
             "At least one argument is required for multi bulk commands")))
   (MultiBulkCommand. args))
-
-
-
-
-
-
-
-
-;; (defmacro defcommand [name args & body+opts]
-;;   (if (empty? body+opts)
-;;     (let [cmd (.toUpperCase (str name))]
-;;       `(defn ~name ~args (make-multi-bulk-command ~cmd ~@args)))
-;;     (let [body (first body+opts)]
-;;       `(defn ~name ~args ~@body))))
-
-
-
-;; (defcommand redis-set [key value])
-
-;; (defcommand redis-get [key]
-;;   (make-multi-bulk-command "GET" key)
-;;   :convert 
-;;   int-to-bool)
-
-;;
-;; 
-;;
-
-;; (defcommand zunion [destkey & keys+opts])
-
-;; (defcommand zscore [key element]
-;;   :convert string-to-double)
-
-;; ZRANGEBYSCORE key min max [LIMIT offset count] [WITHSCORES] (Redis >= 1.3.4)
-;; (defcommand zrangebyscore [key min max & opts]
-;;   (loop [options opts 
-;;          args []]
-;;     (if (empty? options)
-;;       args
-;;       (let [option (first options)]
-;;         (condp = option
-;;           :limit (let [offset (nth options 1)
-;;                        count (nth options 2)]
-;;                    (recur (drop 3 options)
-;;                           (conj args "LIMIT" offset count)))
-;;           :withscores (recur (take 1 options)
-;;                              (conj args "WITHSCORES"))))))))
-
-
-
-;; (redis/zunion "result" "set1" "set2" "set3")
-;; (redis/zunion "result" "set1" "set2" "set3" :weights 1 2 3 :sum)
 

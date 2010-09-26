@@ -1,5 +1,8 @@
 (ns redis.defcommand
-  (:require [redis protocol channel]))
+  (:use [clojure.string :only (upper-case)])
+  (:use [redis.core :only (*channel*)]
+        [redis.protocol :only (make-inline-command make-multi-bulk-command)]
+        [redis.channel :only (send!)]))
 
 ;;;; Command definition macros
 
@@ -26,12 +29,13 @@
                         (map #(when (not (nil? %1))
                                 (%1 %2)) key-fns args)))))
 
-(def *default-opts* {:type     :multi-bulk
-                     :reply-fn identity
-                     :key-fn   get-key-fns})
+(def *default-opts* {:type        :multi-bulk
+                     :reply-fn    identity
+                     :key-fn      get-key-fns
+                     :redis-shard :one})
 
-(def *command-types* {:inline redis.protocol/make-inline-command
-                      :multi-bulk redis.protocol/make-multi-bulk-command})
+(def *command-types* {:inline make-inline-command
+                      :multi-bulk make-multi-bulk-command})
 
 
 (defn parse-opts+body [opts+body]
@@ -46,19 +50,19 @@
            (fn? v)) (recur (assoc opts :reply-fn v) rest)
        (keyword? v) (condp = v
                         :inline     (recur (assoc opts :type v) rest)
-                        :multi-bulk (recur (assoc opts :type v) rest))))))
+                        :multi-bulk (recur (assoc opts :type v) rest)
+                        :all        (recur (assoc opts :redis-shard v) rest)
+                        :one        (recur (assoc opts :redis-shard v) rest))))))
 
 (defn flatten-args [args]
   (let [[args rest] (split-with #(not= % '&) args)]
     [args (last rest)]))
 
-(defn- upcase [#^String s] (.toUpperCase s))
-
 (defmacro defcommand
   ([name args & opts+body]
      (let [[opts body] (parse-opts+body opts+body)
-           {:keys [type reply-fn key-fn]} opts
-           command-name (upcase (str name))
+           {:keys [type reply-fn key-fn redis-shard]} opts
+           command-name (upper-case name)
            command-fn (type *command-types*)
            [command-args command-rest-args] (flatten-args args)
            args-without-and (vec (filter #(not= '& %) args))
@@ -66,16 +70,17 @@
        (if body
          `(defn ~name ~args
             (let [command# ~body]
-              (redis.channel/send redis/*channel* command#)))
+              (send! *channel* command#)))
          `(defn ~name ~args
             (let [command# (apply ~command-fn
                                   ~command-name
                                   ~@command-args
                                   ~command-rest-args)
                   keys# (extract-keys ~key-fns ~args-without-and)]
-              (~reply-fn (redis.channel/send redis/*channel*
-                                     (with-meta command#
-                                       {:redis-keys (vec keys#)})))))))))
+              (~reply-fn (send! *channel*
+                                (with-meta command#
+                                  {:redis-keys (vec keys#)
+                                   :redis-shard ~redis-shard })))))))))
 
 (defmacro defcommands [& command-defs]
   `(do ~@(map (fn [command-def]

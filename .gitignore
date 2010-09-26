@@ -2,4 +2,5 @@ redis-clojure.jar
 \#*
 .\#*
 target
-
+lib
+classes
