@@ -4,6 +4,7 @@ This is work in progress for a new version of redis-clojure targeting Clojure 1.
 
 New/fixed in this version is:
 
+* Connection pooling
 * Binary-safe strings (using multi bulk commands)
 * Better performance
 * Support for pipelining using the `pipeline` macro
@@ -11,7 +12,6 @@ New/fixed in this version is:
 Planned features:
 
 * Sharding
-* Connection pooling
 
 redis-clojure is a Clojure client library for the
 [Redis](http://code.google.com/p/redis) key value (and more!) storage
@@ -22,17 +22,14 @@ Redis commands in a Clojure idiomatic way, when possible.
 
 ## Building 
 
-To build redis-clojure.jar:
-
-    mvn package
-
-This will build redis-clojure and package it nicely into `target/redis-clojure-$VERSION.jar`.
+This version of redis-clojure uses
+[Leiningen](http://github.com/technomancy/leiningen) as build tool.
 
 ## Running tests
 
 To run tests:
 
-    mvn test
+    lein test
 
 *Note* you need to have `redis-server` running on `localhost` at port `6379`.
 
