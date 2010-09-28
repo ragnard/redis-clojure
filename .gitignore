@@ -1,6 +1,7 @@
-redis-clojure.jar
+redis-clojure*.jar
 \#*
 .\#*
 target
 lib
 classes
+pom.xml
