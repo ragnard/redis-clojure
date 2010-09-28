@@ -1,11 +1,10 @@
 (ns redis.command-tests
   (:refer-clojure :exclude [keys type get set sort])
-  (:use [clojure.test]
-        [redis.core :only (with-server)])
-  (:require [redis.commands :as redis]))
+  (:require [redis.core :as redis])
+  (:use [clojure.test]))
 
 (defn server-fixture [f]
-  (with-server
+  (redis/with-server
    {:host "127.0.0.1"
     :port 6379
     :db 15}

@@ -1,4 +1,6 @@
 (ns redis.core
+  (:refer-clojure :exclude [keys type get set sort])
+  (:require [clojure.contrib.ns-utils :only (immigrate) :as contrib])
   (:use [redis.connection :only (with-connection make-non-pooled-connection-pool)]
         [redis.connection-pool :only (make-connection-pool)]
         [redis.channel :only (make-direct-channel)]))
@@ -30,5 +32,5 @@
         (binding [*channel* (make-direct-channel connection#)]
           ~@body))))
 
-
-
+;; Immigrate commands
+(contrib/immigrate 'redis.commands)
