@@ -77,24 +77,24 @@
   (is (= "bar" (redis/get "foo"))))
 
 (deftest incr
-  (is (= 1 (redis/incr "nonexistent")))
-  (is (= 1 (redis/incr "foo")))
-  (is (= 2 (redis/incr "foo"))))
+  (is (= 1 (redis/incr "incr")))
+  (is (= 2 (redis/incr "incr")))
+  (is (thrown? Exception (redis/incr "foo"))))
 
 (deftest incrby
-  (is (= 42 (redis/incrby "nonexistent" 42)))
-  (is (= 0 (redis/incrby "foo" 0)))
-  (is (= 5 (redis/incrby "foo" 5))))
+  (is (= 42 (redis/incrby "incrby" 42)))
+  (is (= 50 (redis/incrby "incrby" 8)))
+  (is (thrown? Exception (redis/incrby "foo" 5))))
 
 (deftest decr
-  (is (= -1 (redis/decr "nonexistent")))
-  (is (= -1 (redis/decr "foo")))
-  (is (= -2 (redis/decr "foo"))))
+  (is (= -1 (redis/decr "decr")))
+  (is (= -2 (redis/decr "decr")))
+  (is (thrown? Exception (redis/decr "foo"))))
 
 (deftest decrby
-  (is (= -42 (redis/decrby "nonexistent" 42)))
-  (is (= 0 (redis/decrby "foo" 0)))
-  (is (= -5 (redis/decrby "foo" 5))))
+  (is (= -42 (redis/decrby "decrby" 42)))
+  (is (= -50 (redis/decrby "decrby" 8)))
+  (is (thrown? Exception (redis/decrby "foo" 5))))
 
 (deftest exists
   (is (= true (redis/exists "foo")))
@@ -123,7 +123,7 @@
   (redis/set "foo" "bar")
   (is (= "foo" (redis/randomkey)))
   (redis/flushdb)
-  (is (= "" (redis/randomkey))))
+  (is (= nil (redis/randomkey))))
 
 (deftest rename
   (is (thrown? Exception (redis/rename "foo" "foo")))
@@ -197,7 +197,7 @@
 
 (deftest lrange
   (is (thrown? Exception (redis/lrange "foo" 0 1)))
-  (is (= nil (redis/lrange "newlist" 0 42)))
+  (is (= [] (redis/lrange "newlist" 0 42)))
   (is (= ["one"] (redis/lrange "list" 0 0)))
   (is (= ["three"] (redis/lrange "list" -1 -1)))
   (is (= ["one" "two"] (redis/lrange "list" 0 1)))
@@ -380,7 +380,7 @@
 
 (deftest zrange
   (is (thrown? Exception (redis/zrange "foo")))
-  (is (= nil (redis/zrange "zset" 0 99)))
+  (is (=  [] (redis/zrange "zset" 0 99)))
   (redis/zadd "zset" 12349809.23873948579348750 "one")
   (redis/zadd "zset" -42 "two")
   (redis/zadd "zset" 3.141592 "three")
@@ -390,7 +390,7 @@
 
 (deftest zrevrange
   (is (thrown? Exception (redis/zrevrange "foo")))
-  (is (= nil (redis/zrevrange "zset" 0 99)))
+  (is (= [] (redis/zrevrange "zset" 0 99)))
   (redis/zadd "zset" 12349809.23873948579348750 "one")
   (redis/zadd "zset" -42 "two")
   (redis/zadd "zset" 3.141592 "three")
@@ -400,7 +400,7 @@
 
 (deftest zrangebyscore
   (is (thrown? Exception (redis/zrangebyscore "foo")))
-  (is (= nil (redis/zrangebyscore "zset" 0 99)))
+  (is (= [] (redis/zrangebyscore "zset" 0 99)))
   (redis/zadd "zset" 1.0 "one")
   (redis/zadd "zset" 2.0 "two")
   (redis/zadd "zset" 3.0 "three")
@@ -461,19 +461,19 @@
   (is (= 3 (redis/hlen "hash"))))
 
 (deftest hkeys
-  (is (= nil (redis/hkeys "noexistent")))
+  (is (= [] (redis/hkeys "noexistent")))
   (is (= ["one" "two" "three"] (redis/hkeys "hash")))
   (redis/hset "hash" "four" "hoge")
   (is (= 4 (count (redis/hkeys "hash")))))
 
 (deftest hvals
-  (is (= nil (redis/hvals "noexistent")))
+  (is (= [] (redis/hvals "noexistent")))
   (is (= ["foo" "bar" "baz"] (redis/hvals "hash")))
   (redis/hdel "hash" "two")
   (is (= ["foo" "baz"] (redis/hvals "hash"))))
 
 (deftest hgetall
-  (is (= nil (redis/hgetall "noexistent")))
+  (is (=  (redis/hgetall "noexistent")))
   (is (= ["one" "foo" "two" "bar" "three" "baz"] (redis/hgetall "hash")))
   (redis/hdel "hash" "one")
   (is (= {"two" "bar", "three" "baz"} (apply hash-map (redis/hgetall "hash")))))
