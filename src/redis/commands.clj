@@ -105,7 +105,28 @@
   (hlen        [key])
   (hkeys       [key])
   (hvals       [key])
-  (hgetall     [key] seq-to-map))
+  (hgetall     [key] seq-to-map)
+  ; multi/exec/discard
+  (multi       [] :inline)
+  (exec        [] :inline)
+  (discard     [] :inline))
+
+;; atomically macro
+(defmacro atomically
+  "Execute all redis commands in body atomically, ie. sandwiched in a
+  MULTI/EXEC statement. If an exception is thrown the EXEC command
+  will be terminated by a DISCARD, no operations will be performed and
+  the exception will be rethrown." 
+  [& body]
+  `(do 
+     (multi) 
+     (try
+      (do 
+        ~@body
+        (exec))
+      (catch Exception e#
+        (discard)
+        (throw e#)))))
 
 ;; Sort command
 

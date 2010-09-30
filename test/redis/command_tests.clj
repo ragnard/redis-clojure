@@ -540,40 +540,40 @@
           "three" "baz"}
          (redis/hgetall "hash"))))
 
-;; ;;
-;; ;; MULTI/EXEC/DISCARD
-;; ;;
-;; (deftest multi-exec
-;;   (redis/set "key" "value")
-;;   (redis/multi)
-;;   (is (= "QUEUED" (redis/set "key" "blahonga")))
-;;   (redis/exec)
-;;   (is (= "blahonga" (redis/get "key"))))
+;;
+;; MULTI/EXEC/DISCARD
+;;
+(deftest multi-exec
+  (redis/set "key" "value")
+  (redis/multi)
+  (is (= "QUEUED" (redis/set "key" "blahonga")))
+  (redis/exec)
+  (is (= "blahonga" (redis/get "key"))))
 
-;; (deftest multi-discard
-;;   (redis/set "key" "value")
-;;   (redis/multi)
-;;   (is (= "QUEUED" (redis/set "key" "blahonga")))
-;;   (redis/discard)
-;;   (is (= "value" (redis/get "key"))))
+(deftest multi-discard
+  (redis/set "key" "value")
+  (redis/multi)
+  (is (= "QUEUED" (redis/set "key" "blahonga")))
+  (redis/discard)
+  (is (= "value" (redis/get "key"))))
 
-;; (deftest atomically
-;;   (redis/set "key" "value")
-;;   (is (= ["OK" "OK" "blahong"]
-;;        (redis/atomically
-;;         (redis/set "key" "blahonga")
-;;         (redis/set "key2" "blahong")
-;;         (redis/get "key2"))))
-;;   (is (= "blahonga" (redis/get "key"))))
+(deftest atomically
+  (redis/set "key" "value")
+  (is (= ["OK" "OK" "blahong"]
+       (redis/atomically
+        (redis/set "key" "blahonga")
+        (redis/set "key2" "blahong")
+        (redis/get "key2"))))
+  (is (= "blahonga" (redis/get "key"))))
 
-;; (deftest atomically-with-exception
-;;   (redis/set "key" "value")
-;;   (is (thrown? Exception 
-;;                (redis/atomically
-;;                 (redis/set "key" "blahonga")
-;;                 (throw (Exception. "Fail"))
-;;                 (redis/set "key2" "blahong"))))
-;;   (is (= "value" (redis/get "key"))))
+(deftest atomically-with-exception
+  (redis/set "key" "value")
+  (is (thrown? Exception 
+               (redis/atomically
+                (redis/set "key" "blahonga")
+                (throw (Exception. "Fail"))
+                (redis/set "key2" "blahong"))))
+  (is (= "value" (redis/get "key"))))
 
 ;;
 ;; Sorting
