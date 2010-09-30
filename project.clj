@@ -1,4 +1,4 @@
-(defproject redis-clojure "1.2.1"
+(defproject redis-clojure "1.2.2"
   :description "A client library for Redis"
   :url "http://github.com/ragnard/redis-clojure"
   :dependencies [[org.clojure/clojure "1.2.0"]
