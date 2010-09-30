@@ -541,7 +541,7 @@
          (redis/hgetall "hash"))))
 
 ;;
-;; MULTI/EXEC/DISCARD
+;; Redis Transactions: MULTI/EXEC/DISCARD/WATCH/UNWATCH
 ;;
 (deftest multi-exec
   (redis/set "key" "value")
@@ -574,6 +574,8 @@
                 (throw (Exception. "Fail"))
                 (redis/set "key2" "blahong"))))
   (is (= "value" (redis/get "key"))))
+
+;; No tests for WATCH/UNWATCH yet. Waiting for stable Redis 2.1 release.
 
 ;;
 ;; Sorting

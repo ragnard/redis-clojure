@@ -106,10 +106,12 @@
   (hkeys       [key])
   (hvals       [key])
   (hgetall     [key] seq-to-map)
-  ; multi/exec/discard
+  ; multi/exec/discard/watch/unwatch
   (multi       [] :inline)
   (exec        [] :inline)
-  (discard     [] :inline))
+  (discard     [] :inline)
+  (watch       [key & keys])
+  (unwatch     [] :inline))
 
 ;; atomically macro
 (defmacro atomically
