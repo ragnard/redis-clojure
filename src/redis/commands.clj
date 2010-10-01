@@ -6,7 +6,7 @@
 ;;; Command definitions
 
 ;; Utility conversion functions
-(defn- int-to-bool [n] (< 0 n))
+(defn- int-to-bool [n] (if (integer? n) (< 0 n) n))
 (defn- string-to-keyword [s] (keyword s))
 (defn- string-to-double [s] (when s (Double/parseDouble s)))
 (defn- seq-to-set [seq] (when seq (clojure.core/set seq)))
