@@ -6,7 +6,8 @@
                     BufferedInputStream
                     BufferedOutputStream
                     ByteArrayOutputStream
-                    ByteArrayInputStream]))
+                    ByteArrayInputStream
+                    StringWriter]))
 
 ;;;
 ;;; Protocols
@@ -38,17 +39,24 @@
      (= actual -1) (throw (Exception. "End of stream reached"))
      true (throw (Exception. (format "Expected byte: 0x%1$x, read 0x%2$x" expected actual))))))
 
-
 (extend-type BufferedInputStream
   RedisInputStream
   (read [this count]
-    (let [buf (byte-array count)
-          nread (.read this buf 0 count)]
-      (when (= -1 nread)
-        (throw (Exception. (str "End of stream reached"))))
+    (let [sw (StringWriter.)
+          buf #^"[B" (make-array Byte/TYPE count)
+          nread (loop [nread 0]
+                  (let [size (.read this buf 0 (- count nread))]
+                    (if (pos? size)
+                      (do
+                        (.write sw (.toCharArray (String. buf 0 size *string-charset*)))
+                        (let [nread (+ nread size)]
+                          (if (> count nread)
+                            (recur nread)
+                            nread)))
+                      nread)))]
       (when (not= nread count)
-        (throw (Exception. (str "Unable to read" count "bytes, read" nread "bytes"))))
-      (String. buf *string-charset*)))
+        (throw (Exception. (str "Unable to read " count " bytes, read " nread " bytes"))))
+      (.toString sw)))
 
   (read-crlf [this]
     (read-expected-byte this CR)
