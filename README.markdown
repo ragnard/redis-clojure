@@ -1,3 +1,6 @@
+# THIS REPO IS NO LONGER MAINTAINED
+Please see the fork by Tavis Rudd at https://github.com/tavisrudd/redis-clojure
+
 # redis-clojure
 
 A Clojure client library for the
